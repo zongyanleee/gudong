@@ -2,16 +2,32 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="古董局中局">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="format-detection" content="telephone=no">
   <title>古董局中局 - 桌遊助手</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;900&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Noto Serif TC', serif, system-ui; }
+    body {
+      font-family: 'Noto Serif TC', serif, system-ui;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+    }
     .mask-blur { filter: blur(14px); user-select: none; }
     .mask-blur.unmasked { filter: blur(0); }
+    /* 防止手機長按選取文字 */
+    button, .cursor-pointer {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
   </style>
 </head>
 <body class="bg-neutral-950 text-neutral-100 min-h-screen flex flex-col selection:bg-amber-900">
@@ -44,7 +60,7 @@
     <button onclick="document.getElementById('restoreBanner').classList.add('hidden')" class="text-amber-400 hover:underline">關閉</button>
   </div>
 
-  <main class="flex-1 max-w-md w-full mx-auto p-4 flex flex-col justify-start">
+  <main class="flex-1 max-w-md w-full mx-auto px-3.5 py-4 flex flex-col justify-start pb-10">
 
     <!-- ================= 階段 1：遊戲設定 (SETUP) ================= -->
     <section id="secSetup" class="space-y-4">
@@ -202,7 +218,7 @@
             <div id="ambushBannerTitle" class="text-base font-black text-rose-300">💥 哈哈！你被藥不然偷襲了</div>
             <div id="ambushBannerSubtitle" class="text-xs text-neutral-300">你的角色能力已被鎖定封鎖，無法使用！</div>
             <button onclick="finishStepB()" class="w-full mt-2 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-bold rounded-lg border border-neutral-700">
-              確認並跳過能力階段 ➔
+              下一步:指定玩家 ➔
             </button>
           </div>
 
@@ -406,7 +422,7 @@
     /* ============================================================
        全域常數與調色盤 (Colors & Constants)
        ============================================================ */
-    const STORAGE_KEY = 'gudong_boardgame_rules_v15';
+    const STORAGE_KEY = 'gudong_boardgame_rules_v16';
     const MASTER_PROFILES_KEY = 'gudong_master_profiles_v2';
     const NICKNAME_STORAGE_KEY = 'gudong_saved_nicknames_v1';
 
@@ -1076,7 +1092,7 @@
           <div class="p-3 bg-neutral-950 border border-neutral-800 rounded-xl text-center space-y-2">
             <div class="text-xs text-neutral-400">當前角色無主動觸發之角色能力。</div>
             <button onclick="finishStepB()" class="w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold text-xs rounded-lg border border-neutral-700">
-              無角色能力，下一步 ➔
+              下一步:指定玩家 ➔
             </button>
           </div>
         `;
@@ -1118,7 +1134,7 @@
 
             <!-- 下一步按鈕：沒確認前 disabled -->
             <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-2.5 rounded-lg border font-bold text-xs ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700 cursor-pointer' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
-              ${isLocked ? '已確認查驗，進入下一步 ➔' : '請先點選玩家並確認查驗'}
+              ${isLocked ? '下一步:指定玩家 ➔' : '請先點選玩家並確認查驗'}
             </button>
           </div>
         `;
@@ -1150,7 +1166,7 @@
 
             <!-- 下一步按鈕：沒確認前 disabled -->
             <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-2.5 rounded-lg border font-bold text-xs ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700 cursor-pointer' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
-              ${isLocked ? '下一步 ➔' : '請先點擊確認能力設定'}
+              ${isLocked ? '下一步:指定玩家 ➔' : '請先點擊確認能力設定'}
             </button>
           </div>
         `;
@@ -1190,7 +1206,7 @@
 
             <!-- 下一步按鈕：沒確認前 disabled -->
             <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-2.5 rounded-lg border font-bold text-xs ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700 cursor-pointer' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
-              ${isLocked ? '下一步 ➔' : '請先點擊確認封鎖選擇'}
+              ${isLocked ? '下一步:指定玩家 ➔' : '請先點擊確認封鎖選擇'}
             </button>
           </div>
         `;
@@ -1248,7 +1264,7 @@
 
             <!-- 下一步按鈕：沒確認前 disabled -->
             <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-2.5 rounded-lg border font-bold text-xs ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700 cursor-pointer' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
-              ${isLocked ? '下一步 ➔' : '請先點擊確認偷襲或跳過'}
+              ${isLocked ? '下一步:指定玩家 ➔' : '請先點擊確認偷襲或跳過'}
             </button>
           </div>
         `;
