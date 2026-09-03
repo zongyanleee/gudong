@@ -436,7 +436,7 @@
     /* ============================================================
        全域常數與調色盤 (Colors & Constants)
        ============================================================ */
-    const STORAGE_KEY = 'gudong_boardgame_rules_v24';
+    const STORAGE_KEY = 'gudong_boardgame_rules_v25';
     const MASTER_PROFILES_KEY = 'gudong_master_profiles_v2';
     const NICKNAME_STORAGE_KEY = 'gudong_saved_nicknames_v1';
 
@@ -725,7 +725,7 @@
 
             <!-- 顏色圓點與輸入框 -->
             <span class="w-4 h-4 rounded-full ${curColor.dotClass} border flex-shrink-0"></span>
-            <input type="text" value="${p.name}" oninput="setPlayerName(${idx}, this.value)" class="flex-1 text-sm font-medium bg-neutral-900 border border-neutral-700 rounded-lg px-2.5 py-1.5 text-neutral-100 outline-none focus:border-amber-500">
+            <input type="text" value="${p.name}" oninput="setPlayerName(${idx}, this.value)" class="w-28 sm:w-32 text-sm font-medium bg-neutral-900 border border-neutral-700 rounded-lg px-2.5 py-1.5 text-neutral-100 outline-none focus:border-amber-500">
             <span class="text-sm text-neutral-300 font-bold px-2 py-0.5 rounded border border-neutral-700 flex-shrink-0">${curColor.name}色</span>
             ${isDup ? '<span class="text-[10px] text-rose-400 font-bold bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800 flex-shrink-0">重複</span>' : ''}
 
