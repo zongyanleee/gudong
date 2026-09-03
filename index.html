@@ -40,7 +40,7 @@
     <div class="flex items-center space-x-2">
       <div class="w-8 h-8 rounded bg-amber-700/30 border border-amber-600/60 flex items-center justify-center text-amber-500 font-black text-sm">局</div>
       <div>
-        <h1 class="text-base font-bold text-amber-400 tracking-wider">古董局中局助手</h1>
+        <h1 class="text-lg font-black text-amber-400 tracking-wider">古董局中局助手</h1>
         <div id="saveNotice" class="text-[10px] text-neutral-400 flex items-center space-x-1">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
           <span>進度即時存檔中</span>
@@ -48,10 +48,10 @@
       </div>
     </div>
     <div class="flex items-center space-x-2">
-      <button id="voiceBtn" onclick="toggleVoice()" class="text-xs px-2.5 py-1.5 rounded border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 transition">
+      <button id="voiceBtn" onclick="toggleVoice()" class="text-sm px-3 py-1.5 rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold transition">
         🔊 語音: 開
       </button>
-      <button onclick="confirmResetGame()" class="text-xs px-2.5 py-1.5 rounded border border-rose-900 bg-rose-950/50 hover:bg-rose-900 text-rose-300 transition">
+      <button onclick="confirmResetGame()" class="text-sm px-3 py-1.5 rounded-lg border border-rose-900 bg-rose-950/50 hover:bg-rose-900 text-rose-300 font-bold transition">
         重新開局
       </button>
     </div>
@@ -68,19 +68,19 @@
     <!-- ================= 階段 1：遊戲設定 (SETUP) ================= -->
     <section id="secSetup" class="space-y-4">
       <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-xl">
-        <h2 class="text-base font-bold text-amber-400 mb-1 flex items-center">
+        <h2 class="text-lg font-black text-amber-400 mb-1 flex items-center">
           <span class="mr-2">壹.</span> 遊戲人數與玩家設定
         </h2>
         <p class="text-xs text-neutral-400 mb-4">固定進行三回合，每回合由12獸首中抽出4件（必為2真2假）。</p>
 
         <!-- 人數選擇：僅 7 人與 8 人局 -->
-        <label class="block text-xs font-semibold text-neutral-300 mb-1.5">選擇玩家人數（無6人局）</label>
+        <label class="block text-sm font-bold text-neutral-200 mb-2">選擇玩家人數（無6人局）</label>
         <div class="grid grid-cols-2 gap-3 mb-5">
-          <button type="button" onclick="setPlayerCount(7)" id="btnCount7" class="py-3 rounded-xl border text-sm font-bold transition flex flex-col items-center justify-center">
+          <button type="button" onclick="setPlayerCount(7)" id="btnCount7" class="py-3 rounded-xl border text-base font-black transition flex flex-col items-center justify-center">
             <span>7 人局</span>
             <span class="text-[10px] font-normal text-neutral-400">4好 3壞 / 無姬雲浮</span>
           </button>
-          <button type="button" onclick="setPlayerCount(8)" id="btnCount8" class="py-3 rounded-xl border text-sm font-bold transition flex flex-col items-center justify-center">
+          <button type="button" onclick="setPlayerCount(8)" id="btnCount8" class="py-3 rounded-xl border text-base font-black transition flex flex-col items-center justify-center">
             <span>8 人局</span>
             <span class="text-[10px] font-normal text-neutral-400">5好 3壞 / 包含姬雲浮</span>
           </button>
@@ -88,7 +88,7 @@
 
                 <!-- 玩家名稱與專屬顏色 (暱稱與顏色自動保存記憶) -->
         <div class="mb-2 flex justify-between items-center">
-          <label class="text-xs font-semibold text-neutral-300">玩家名單與專屬顏色（黑紅橘黃綠藍紫白）</label>
+          <label class="text-sm font-bold text-neutral-200">玩家名單與專屬顏色（黑紅橘黃綠藍紫白）</label>
           <span class="text-[10px] text-amber-500 font-medium">✨ 暱稱與顏色已自動記憶</span>
         </div>
 
@@ -101,7 +101,7 @@
           <!-- 動態渲染每位玩家輸入欄與顏色選擇按鈕 -->
         </div>
 
-        <button id="btnStartGame" onclick="startGame()" class="w-full py-3.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-neutral-950 font-black text-base rounded-xl shadow-lg transition tracking-wider">
+        <button id="btnStartGame" onclick="startGame()" class="w-full py-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-neutral-950 font-black text-lg rounded-xl shadow-xl transition tracking-wider">
           開始遊戲・隨機分配角色
         </button>
       </div>
@@ -114,7 +114,7 @@
         
         <div class="flex items-center justify-center space-x-2 my-2">
           <span id="revealColorBadge" class="w-4 h-4 rounded-full border border-neutral-600 inline-block"></span>
-          <h2 id="revealPlayerName" class="text-2xl font-black text-neutral-100">玩家 1</h2>
+          <h2 id="revealPlayerName" class="text-3xl font-black text-neutral-100">玩家 1</h2>
         </div>
 
         <p class="text-xs text-neutral-400 mb-4">確認周遭無人窺探後，點擊下方卡片查閱自己的角色。</p>
@@ -123,13 +123,13 @@
         <div onclick="toggleRoleCardMask()" class="bg-neutral-950 border border-neutral-800 rounded-xl p-6 my-3 cursor-pointer min-h-[160px] flex flex-col items-center justify-center relative shadow-inner hover:border-neutral-700 transition">
           <div id="roleCardCover" class="absolute inset-0 bg-neutral-950/95 flex flex-col items-center justify-center z-10">
             <div class="text-2xl mb-1">🔒</div>
-            <div class="text-xs font-bold text-amber-400">點擊翻開查看角色名字</div>
+            <div class="text-sm font-black text-amber-400">點擊翻開查看角色名字</div>
             <div class="text-[10px] text-neutral-500 mt-1">（必須點開確認後，方可按確認按鈕）</div>
           </div>
           <!-- 統一灰色字體，僅顯示角色名字 -->
           <div id="roleCardText" class="mask-blur">
             <div class="text-xs text-neutral-500 mb-1">你的角色名字</div>
-            <div id="roleCharName" class="text-3xl font-black tracking-widest text-neutral-400 my-2">許願</div>
+            <div id="roleCharName" class="text-4xl font-black tracking-widest text-neutral-300 my-3">許願</div>
             <div class="text-[10px] text-neutral-500">（請記住角色名稱，後續將根據此角色執行專屬能力）</div>
           </div>
         </div>
@@ -137,7 +137,7 @@
         <div class="text-xs text-neutral-500 mb-4" id="revealProgressText">進度：1 / 7 位玩家</div>
 
         <!-- 若未點擊查看角色名字則 disabled 不給按 -->
-        <button onclick="nextRoleReveal()" id="roleConfirmBtn" disabled class="w-full py-3 bg-neutral-900 text-neutral-600 font-bold rounded-xl border border-neutral-800 transition cursor-not-allowed opacity-50">
+        <button onclick="nextRoleReveal()" id="roleConfirmBtn" disabled class="w-full py-3.5 bg-neutral-900 text-neutral-600 font-black text-base rounded-xl border border-neutral-800 transition cursor-not-allowed opacity-50">
           我已確認角色，換下一位玩家 ➔
         </button>
       </div>
@@ -150,12 +150,12 @@
         
         <div class="my-4 p-5 bg-neutral-950 border border-neutral-800 rounded-2xl w-full">
           <div class="text-xs text-neutral-400 mb-1">回合交接提示</div>
-          <div id="handoverMessage" class="text-xl font-black text-neutral-200 leading-relaxed">
+          <div id="handoverMessage" class="text-2xl font-black text-neutral-200 leading-relaxed">
             請 <span id="handoverPlayerTag" class="text-amber-400 font-black">【黑色 玩家1】</span><br>確認現在是自己的回合
           </div>
         </div>
 
-        <button onclick="enterPlayerTurn()" class="w-full py-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-neutral-950 font-black text-base rounded-xl shadow-lg transition">
+        <button onclick="enterPlayerTurn()" class="w-full py-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-neutral-950 font-black text-lg rounded-xl shadow-xl transition">
           確認進入我的回合 ➔
         </button>
       </div>
@@ -168,15 +168,15 @@
         <div class="flex justify-between items-center border-b border-neutral-800 pb-3 mb-3">
           <div class="flex items-center space-x-2">
             <span id="turnColorDot" class="w-3.5 h-3.5 rounded-full border border-neutral-500 inline-block"></span>
-            <span id="turnPlayerTitle" class="text-base font-black text-neutral-100">玩家 1 的回合</span>
+            <span id="turnPlayerTitle" class="text-lg font-black text-neutral-100">玩家 1 的回合</span>
           </div>
-          <span id="turnRoundBadge" class="text-xs bg-amber-950/80 text-amber-300 border border-amber-700/50 px-2 py-0.5 rounded">第 1 回合</span>
+          <span id="turnRoundBadge" class="text-sm font-bold bg-amber-950/80 text-amber-300 border border-amber-700/50 px-2.5 py-1 rounded">第 1 回合</span>
         </div>
 
         <!-- 流程 a: 選擇想查驗的獸首 (從左至右按照十二生肖順序排序) -->
         <div id="stepA" class="space-y-3">
           <div class="flex justify-between items-center">
-            <h3 class="text-xs font-bold text-amber-400 flex items-center">
+            <h3 class="text-sm font-bold text-amber-400 flex items-center">
               <span class="w-5 h-5 rounded-full bg-amber-500 text-neutral-950 font-bold inline-flex items-center justify-center text-[10px] mr-1.5">a</span>
               請點擊選擇想查驗的獸首
             </h3>
@@ -190,18 +190,18 @@
           <!-- 查驗結果展示 -->
           <div id="appraiseResultBox" class="hidden bg-neutral-950 border border-neutral-800 rounded-xl p-4 text-center space-y-2 mt-3">
             <div class="text-xs text-neutral-400">查驗情報回饋：</div>
-            <div id="appraiseResultText" class="text-xl font-black text-amber-400 tracking-wider">
+            <div id="appraiseResultText" class="text-2xl font-black text-amber-400 tracking-wider">
               <!-- 動態填入 -->
             </div>
             <div id="appraiseSubNote" class="text-[10px] text-neutral-500">（註：查驗結果會受到玩家順序以及角色能力影響）</div>
-            <button onclick="goToStepB()" id="btnGoToStepB" class="w-full mt-2 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold text-xs rounded-lg border border-neutral-700">
+            <button onclick="goToStepB()" id="btnGoToStepB" class="w-full mt-2.5 py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-100 font-bold text-sm rounded-xl border border-neutral-700">
               下一步：角色能力 ➔
             </button>
           </div>
         </div>
 
         <!-- 陣營資訊：位置在查驗欄位(stepA)以及角色專屬能力欄位(stepB)中間，不顯示鄭國渠 -->
-        <div id="turnCampInfoBanner" class="hidden my-3 p-3 bg-neutral-950 border border-neutral-800 rounded-xl text-xs text-neutral-300">
+        <div id="turnCampInfoBanner" class="hidden my-3 p-3.5 bg-neutral-950 border border-neutral-800 rounded-xl text-sm text-neutral-200 font-medium">
           <span class="text-amber-400 font-bold">陣營資訊：</span>
           <span id="turnCampInfoText" class="font-bold text-neutral-200"></span>
         </div>
@@ -209,7 +209,7 @@
         <!-- 流程 b: 角色專屬能力階段 -->
         <div id="stepB" class="hidden space-y-3 pt-3 border-t border-neutral-800 mt-3">
           <div class="flex items-center justify-between">
-            <h3 class="text-xs font-bold text-amber-400 flex items-center">
+            <h3 class="text-sm font-bold text-amber-400 flex items-center">
               <span class="w-5 h-5 rounded-full bg-amber-500 text-neutral-950 font-bold inline-flex items-center justify-center text-[10px] mr-1.5">b</span>
               角色專屬能力階段
             </h3>
@@ -234,13 +234,13 @@
 
         <!-- 流程 c: 選擇下一位玩家 (按鈕顏色隨選中的人變化) -->
         <div id="stepC" class="hidden space-y-3 pt-3 border-t border-neutral-800 mt-3">
-          <h3 class="text-xs font-bold text-amber-400 flex items-center">
+          <h3 class="text-sm font-bold text-amber-400 flex items-center">
             <span class="w-5 h-5 rounded-full bg-amber-500 text-neutral-950 font-bold inline-flex items-center justify-center text-[10px] mr-1.5">c</span>
             指定下一位查驗獸首的玩家
           </h3>
 
           <div id="stepCUncheckedSection">
-            <p class="text-xs text-neutral-400 mb-2">請點擊選擇當回合【尚未查驗】的玩家顏色：</p>
+            <p class="text-sm font-bold text-neutral-300 mb-2.5">請點擊選擇當回合【尚未查驗】的玩家顏色：</p>
             <div id="uninspectedPlayersList" class="grid grid-cols-2 gap-2">
               <!-- 未查驗玩家顏色按鈕 -->
             </div>
@@ -271,14 +271,14 @@
       <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-xl">
         <div class="flex justify-between items-center border-b border-neutral-800 pb-3 mb-3">
           <div>
-            <h2 id="voteRoundTitle" class="text-base font-black text-amber-400">第 1 回合 - 鑑寶投票</h2>
+            <h2 id="voteRoundTitle" class="text-lg font-black text-amber-400">第 1 回合 - 鑑寶投票</h2>
             <div class="text-xs text-neutral-400">排序由上至下依十二生肖順序，同票時生肖前者勝出</div>
           </div>
         </div>
 
         <!-- 鑑寶投票大倒數按鈕 -->
         <div class="mb-4">
-          <button type="button" onclick="startVotingCountdown()" id="btnVoteCountdown" class="w-full py-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-neutral-950 font-black text-base rounded-2xl shadow-xl transition flex items-center justify-center space-x-2 active:scale-[0.98]">
+          <button type="button" onclick="startVotingCountdown()" id="btnVoteCountdown" class="w-full py-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-neutral-950 font-black text-lg rounded-2xl shadow-2xl transition flex items-center justify-center space-x-2 active:scale-[0.98]">
             <span class="text-xl">⏱️</span>
             <span id="countdownBtnText" class="tracking-wider">投票大倒數（3、2、1）</span>
           </button>
@@ -293,7 +293,7 @@
           <!-- 4 個獸首投票輸入行 -->
         </div>
 
-        <button onclick="calculateVoteResults()" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-neutral-950 font-black text-sm rounded-xl shadow-lg transition">
+        <button onclick="calculateVoteResults()" class="w-full py-3.5 bg-amber-600 hover:bg-amber-500 text-neutral-950 font-black text-base rounded-xl shadow-xl transition">
           結算本輪投票結果 🗳️
         </button>
 
@@ -307,7 +307,7 @@
               <span class="text-xs font-bold text-amber-400">🥇 第一名獸首</span>
               <span id="rank1Votes" class="text-xs text-neutral-400">得票：0票</span>
             </div>
-            <div id="rank1Name" class="text-xl font-black text-neutral-100 my-1">鼠</div>
+            <div id="rank1Name" class="text-2xl font-black text-neutral-100 my-1">鼠</div>
             <div class="text-xs text-amber-300/80 bg-amber-950/40 border border-amber-800/40 p-2 rounded mt-2">
               🔒 真偽資訊已隱藏保密（由館方秘密封存）
             </div>
@@ -319,7 +319,7 @@
               <span class="text-xs font-bold text-emerald-400">🥈 第二名獸首</span>
               <span id="rank2Votes" class="text-xs text-neutral-400">得票：0票</span>
             </div>
-            <div id="rank2Name" class="text-xl font-black text-neutral-100 my-1">牛</div>
+            <div id="rank2Name" class="text-2xl font-black text-neutral-100 my-1">牛</div>
             <div id="rank2TruthBox" class="text-sm font-black text-emerald-300 bg-emerald-950/60 border border-emerald-700/60 p-2.5 rounded mt-2">
               <!-- 螢幕僅顯示【真品】或【贗品】 -->
             </div>
@@ -327,7 +327,7 @@
 
           <!-- 下一步按鈕 -->
           <div class="pt-2">
-            <button onclick="finishRoundAndAdvance()" id="advanceNextRoundBtn" class="w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-amber-400 font-bold text-sm rounded-xl border border-neutral-700 transition">
+            <button onclick="finishRoundAndAdvance()" id="advanceNextRoundBtn" class="w-full py-3.5 bg-neutral-800 hover:bg-neutral-700 text-amber-400 font-black text-base rounded-xl border border-neutral-700 transition">
               進入下一回合 ➔
             </button>
           </div>
@@ -348,7 +348,7 @@
           </div>
         </div>
 
-        <button onclick="enterPersonVoteTurn()" class="w-full py-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-neutral-950 font-black text-base rounded-xl shadow-lg transition">
+        <button onclick="enterPersonVoteTurn()" class="w-full py-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-neutral-950 font-black text-lg rounded-xl shadow-xl transition">
           確認進入鑑人投票 ➔
         </button>
       </div>
@@ -369,7 +369,7 @@
         </p>
 
         <!-- 其他玩家顏色選擇格 (排除該玩家自己) -->
-        <div class="text-xs font-semibold text-neutral-300 mb-2">請點擊選擇您要指認的人選：</div>
+        <div class="text-sm font-bold text-neutral-200 mb-2.5">請點擊選擇您要指認的人選：</div>
         <div id="pvCandidatesList" class="grid grid-cols-2 gap-2.5 mb-5">
           <!-- 候選人顏色按鈕 -->
         </div>
@@ -425,7 +425,7 @@
     /* ============================================================
        全域常數與調色盤 (Colors & Constants)
        ============================================================ */
-    const STORAGE_KEY = 'gudong_boardgame_rules_v17';
+    const STORAGE_KEY = 'gudong_boardgame_rules_v18';
     const MASTER_PROFILES_KEY = 'gudong_master_profiles_v2';
     const NICKNAME_STORAGE_KEY = 'gudong_saved_nicknames_v1';
 
@@ -681,8 +681,8 @@
         row.innerHTML = `
           <div class="flex items-center space-x-2">
             <span class="w-4 h-4 rounded-full ${curColor.dotClass} border"></span>
-            <input type="text" value="${p.name}" oninput="setPlayerName(${idx}, this.value)" class="flex-1 text-xs bg-neutral-900 border border-neutral-700 rounded-lg px-2.5 py-1.5 text-neutral-200 outline-none focus:border-amber-500">
-            <span class="text-xs text-neutral-400 font-semibold px-2 py-0.5 rounded border border-neutral-700">${curColor.name}色</span>
+            <input type="text" value="${p.name}" oninput="setPlayerName(${idx}, this.value)" class="flex-1 text-sm font-medium bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-neutral-100 outline-none focus:border-amber-500">
+            <span class="text-sm text-neutral-300 font-bold px-2.5 py-1 rounded border border-neutral-700">${curColor.name}色</span>
             ${isDup ? '<span class="text-[10px] text-rose-400 font-bold bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800">顏色重複</span>' : ''}
           </div>
           <div class="flex items-center space-x-1.5 pt-1 overflow-x-auto">
@@ -790,7 +790,7 @@
 
       // 遮蔽狀態下一律保持 ???，不載入下一家角色文字
       document.getElementById('roleCharName').innerText = '???';
-      document.getElementById('roleCharName').className = "text-3xl font-black tracking-widest text-neutral-400 my-2";
+      document.getElementById('roleCharName').className = "text-4xl font-black tracking-widest text-neutral-300 my-3";
 
       document.getElementById('revealProgressText').innerText = `進度：${G.roleRevealIdx + 1} / ${G.players.length} 位玩家`;
 
@@ -971,7 +971,7 @@
         }`;
 
         btn.innerHTML = `
-          <span class="text-2xl font-black text-amber-300">${b.name}</span>
+          <span class="text-3xl font-black text-amber-300">${b.name}</span>
           <span class="text-[9px] text-neutral-400 mt-1">${isChosen ? '已查驗' : (isLocked ? '已鎖定' : '點擊')}</span>
         `;
 
@@ -1107,7 +1107,7 @@
         container.innerHTML = `
           <div class="p-3 bg-neutral-950 border border-neutral-800 rounded-xl text-center space-y-2">
             <div class="text-xs text-neutral-400">當前角色無主動觸發之角色能力。</div>
-            <button onclick="finishStepB()" class="w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold text-xs rounded-lg border border-neutral-700">
+            <button onclick="finishStepB()" class="w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-100 font-bold text-sm rounded-xl border border-neutral-700">
               下一步:指定玩家 ➔
             </button>
           </div>
@@ -1123,7 +1123,7 @@
           playerButtons += `
             <button type="button" onclick="fangZhenSelectPlayer(${p.id})" ${isLocked ? 'disabled' : ''} class="p-3 rounded-xl border bg-neutral-900 border-neutral-700 hover:border-amber-500 transition flex items-center justify-between ${isSelected ? 'ring-2 ring-amber-400 border-amber-400' : ''} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}">
               <span class="text-amber-300 text-xl font-black">${pc.name}</span>
-              <span class="text-xs text-neutral-300 font-bold">${p.name}</span>
+              <span class="text-sm text-neutral-200 font-bold">${p.name}</span>
             </button>
           `;
         });
@@ -1149,7 +1149,7 @@
             </div>
 
             <!-- 下一步按鈕：沒確認前 disabled -->
-            <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-2.5 rounded-lg border font-bold text-xs ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700 cursor-pointer' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
+            <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-3 rounded-xl border font-bold text-sm ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-100 border-neutral-700 cursor-pointer shadow-md' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
               ${isLocked ? '下一步:指定玩家 ➔' : '請先點選玩家並確認查驗'}
             </button>
           </div>
@@ -1171,7 +1171,7 @@
             <p class="text-[10px] text-neutral-500">開啟後，本回合在老朝奉之後行動的許願陣營（非姬雲浮）查驗真假全面反轉！</p>
             
             <div class="${isLocked ? 'hidden' : ''}">
-              <button type="button" onclick="laoChaoFengConfirm()" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-neutral-950 font-black text-xs rounded-xl shadow-md">
+              <button type="button" onclick="laoChaoFengConfirm()" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-neutral-950 font-black text-sm rounded-xl shadow-lg">
                 確認鎖定能力設定 ➔
               </button>
             </div>
@@ -1181,7 +1181,7 @@
             </div>
 
             <!-- 下一步按鈕：沒確認前 disabled -->
-            <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-2.5 rounded-lg border font-bold text-xs ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700 cursor-pointer' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
+            <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-3 rounded-xl border font-bold text-sm ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-100 border-neutral-700 cursor-pointer shadow-md' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
               ${isLocked ? '下一步:指定玩家 ➔' : '請先點擊確認能力設定'}
             </button>
           </div>
@@ -1215,13 +1215,13 @@
             </div>
             
             <div class="${isLocked ? 'hidden' : ''}">
-              <button type="button" onclick="zhengConfirm()" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-neutral-950 font-black text-xs rounded-xl shadow-md">
+              <button type="button" onclick="zhengConfirm()" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-neutral-950 font-black text-sm rounded-xl shadow-lg">
                 確認鎖定封鎖選擇 ➔
               </button>
             </div>
 
             <!-- 下一步按鈕：沒確認前 disabled -->
-            <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-2.5 rounded-lg border font-bold text-xs ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700 cursor-pointer' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
+            <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-3 rounded-xl border font-bold text-sm ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-100 border-neutral-700 cursor-pointer shadow-md' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
               ${isLocked ? '下一步:指定玩家 ➔' : '請先點擊確認封鎖選擇'}
             </button>
           </div>
@@ -1266,10 +1266,10 @@
             </div>
 
             <div class="flex space-x-2 pt-2 ${isLocked ? 'hidden' : ''}">
-              <button type="button" onclick="yaoSkipAmbush()" class="flex-1 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 border border-neutral-700 font-bold text-xs rounded-xl">
+              <button type="button" onclick="yaoSkipAmbush()" class="flex-1 py-3 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-700 font-bold text-sm rounded-xl">
                 跳過不偷襲
               </button>
-              <button type="button" onclick="yaoConfirmAmbush()" id="btnYaoConfirm" class="flex-1 py-2.5 bg-rose-700 hover:bg-rose-600 text-white font-black text-xs rounded-xl shadow-md disabled:opacity-40 disabled:cursor-not-allowed" ${G.yaoSelectedTargetId ? '' : 'disabled'}>
+              <button type="button" onclick="yaoConfirmAmbush()" id="btnYaoConfirm" class="flex-1 py-3 bg-rose-700 hover:bg-rose-600 text-white font-black text-sm rounded-xl shadow-lg disabled:opacity-40 disabled:cursor-not-allowed" ${G.yaoSelectedTargetId ? '' : 'disabled'}>
                 確認偷襲 ➔
               </button>
             </div>
@@ -1279,7 +1279,7 @@
             </div>
 
             <!-- 下一步按鈕：沒確認前 disabled -->
-            <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-2.5 rounded-lg border font-bold text-xs ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700 cursor-pointer' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
+            <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-3 rounded-xl border font-bold text-sm ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-100 border-neutral-700 cursor-pointer shadow-md' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
               ${isLocked ? '下一步:指定玩家 ➔' : '請先點擊確認偷襲或跳過'}
             </button>
           </div>
@@ -1449,7 +1449,7 @@
           btn.className = `p-3 rounded-xl border text-xs font-bold transition flex items-center justify-between ${c.bgClass} ${isSelected ? 'ring-4 ring-white scale-[1.03]' : 'opacity-85 hover:opacity-100'}`;
           btn.innerHTML = `
             <span>${c.name}色</span>
-            <span class="text-sm font-black">${p.name}</span>
+            <span class="text-base font-black">${p.name}</span>
             <span>${isSelected ? '✓' : ''}</span>
           `;
           btn.onclick = () => {
@@ -1556,12 +1556,12 @@
         row.innerHTML = `
           <div class="flex items-center space-x-2">
             <span class="text-xs text-neutral-500">生肖序</span>
-            <span class="text-xl font-black text-amber-300 w-12">${b.name}</span>
+            <span class="text-2xl font-black text-amber-300 w-12">${b.name}</span>
           </div>
           <div class="flex items-center space-x-2">
-            <button type="button" onclick="adjustVote(${bIdx}, -1)" class="w-8 h-8 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-black text-base flex items-center justify-center border border-neutral-700 active:scale-95 transition">-</button>
-            <input type="number" min="0" value="${b.votes || 0}" id="voteInput_${bIdx}" oninput="updateVoteValue(${bIdx}, this.value)" class="w-14 text-center bg-neutral-900 border border-neutral-700 focus:border-amber-500 rounded-lg py-1.5 text-base font-bold text-neutral-100 outline-none">
-            <button type="button" onclick="adjustVote(${bIdx}, 1)" class="w-8 h-8 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-black text-base flex items-center justify-center border border-neutral-700 active:scale-95 transition">+</button>
+            <button type="button" onclick="adjustVote(${bIdx}, -1)" class="w-9 h-9 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-100 font-black text-lg flex items-center justify-center border border-neutral-700 active:scale-95 transition">-</button>
+            <input type="number" min="0" value="${b.votes || 0}" id="voteInput_${bIdx}" oninput="updateVoteValue(${bIdx}, this.value)" class="w-16 text-center bg-neutral-900 border border-neutral-700 focus:border-amber-500 rounded-lg py-1.5 text-lg font-black text-neutral-100 outline-none">
+            <button type="button" onclick="adjustVote(${bIdx}, 1)" class="w-9 h-9 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-100 font-black text-lg flex items-center justify-center border border-neutral-700 active:scale-95 transition">+</button>
           </div>
         `;
         container.appendChild(row);
@@ -1717,7 +1717,7 @@
         btn.className = `p-3.5 rounded-xl border text-xs font-bold transition flex items-center justify-between ${pc.bgClass} ${isSelected ? 'ring-4 ring-white scale-[1.03]' : 'opacity-85 hover:opacity-100'}`;
         btn.innerHTML = `
           <span>${pc.name}色</span>
-          <span class="text-sm font-black">${p.name}</span>
+          <span class="text-base font-black">${p.name}</span>
           <span>${isSelected ? '✓' : ''}</span>
         `;
         btn.onclick = () => {
@@ -1839,9 +1839,9 @@
         banner.className = 'p-5 rounded-2xl border border-amber-500 bg-amber-950/60 text-center mb-5 shadow-2xl';
         banner.innerHTML = `
           <div class="text-xs text-amber-400 font-bold mb-1">【對局最終結果】</div>
-          <div class="text-3xl font-black text-amber-300 mb-2">🎉 許願陣營 獲勝！</div>
-          <div class="text-2xl font-black text-emerald-400 font-mono mb-3">最終總分：${totalScore} 分（≥ 6分）</div>
-          <div class="text-xs text-neutral-300 text-left space-y-1.5 bg-neutral-950 p-3 rounded-xl border border-neutral-800">
+          <div class="text-4xl font-black text-amber-300 mb-2">🎉 許願陣營 獲勝！</div>
+          <div class="text-3xl font-black text-emerald-400 font-mono mb-3">最終總分：${totalScore} 分（≥ 6分）</div>
+          <div class="text-sm text-neutral-200 text-left space-y-2 bg-neutral-950 p-3.5 rounded-xl border border-neutral-800">
             ${scoreDetails.map(d => `<div>• ${d}</div>`).join('')}
           </div>
         `;
@@ -1851,9 +1851,9 @@
         banner.className = 'p-5 rounded-2xl border border-rose-700 bg-rose-950/60 text-center mb-5 shadow-2xl';
         banner.innerHTML = `
           <div class="text-xs text-rose-400 font-bold mb-1">【對局最終結果】</div>
-          <div class="text-3xl font-black text-rose-400 mb-2">😈 老朝奉陣營 獲勝！</div>
-          <div class="text-2xl font-black text-rose-300 font-mono mb-3">最終總分：${totalScore} 分（0～5分）</div>
-          <div class="text-xs text-neutral-300 text-left space-y-1.5 bg-neutral-950 p-3 rounded-xl border border-neutral-800">
+          <div class="text-4xl font-black text-rose-400 mb-2">😈 老朝奉陣營 獲勝！</div>
+          <div class="text-3xl font-black text-rose-300 font-mono mb-3">最終總分：${totalScore} 分（0～5分）</div>
+          <div class="text-sm text-neutral-200 text-left space-y-2 bg-neutral-950 p-3.5 rounded-xl border border-neutral-800">
             ${scoreDetails.map(d => `<div>• ${d}</div>`).join('')}
           </div>
         `;
