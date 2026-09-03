@@ -1,0 +1,2125 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="古董局中局">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="format-detection" content="telephone=no">
+  <title>古董局中局 - 桌遊助手</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Serif TC', serif, system-ui;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+    }
+    .mask-blur { filter: blur(14px); user-select: none; }
+    .mask-blur.unmasked { filter: blur(0); }
+    /* 防止手機長按選取文字 */
+    button, .cursor-pointer {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="bg-neutral-950 text-neutral-100 min-h-screen flex flex-col selection:bg-amber-900">
+
+  <!-- 頂部狀態列 -->
+  <header class="bg-neutral-900/90 backdrop-blur border-b border-neutral-800 px-4 py-3 sticky top-0 z-50 flex justify-between items-center shadow-md">
+    <div class="flex items-center space-x-2">
+      <div class="w-8 h-8 rounded bg-amber-700/30 border border-amber-600/60 flex items-center justify-center text-amber-500 font-black text-sm">局</div>
+      <div>
+        <h1 class="text-base font-bold text-amber-400 tracking-wider">古董局中局助手</h1>
+        <div id="saveNotice" class="text-[10px] text-neutral-400 flex items-center space-x-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+          <span>進度即時存檔中</span>
+        </div>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2">
+      <button id="voiceBtn" onclick="toggleVoice()" class="text-xs px-2.5 py-1.5 rounded border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 transition">
+        🔊 語音: 開
+      </button>
+      <button onclick="confirmResetGame()" class="text-xs px-2.5 py-1.5 rounded border border-rose-900 bg-rose-950/50 hover:bg-rose-900 text-rose-300 transition">
+        重新開局
+      </button>
+    </div>
+  </header>
+
+  <!-- 恢復存檔提示 -->
+  <div id="restoreBanner" class="hidden bg-amber-950/90 border-b border-amber-600/60 px-4 py-2 text-xs flex justify-between items-center text-amber-200">
+    <span>📌 已為您自動載入上次對局進度（防止重整遺失）。</span>
+    <button onclick="document.getElementById('restoreBanner').classList.add('hidden')" class="text-amber-400 hover:underline">關閉</button>
+  </div>
+
+  <main class="flex-1 max-w-md w-full mx-auto px-3.5 py-4 flex flex-col justify-start pb-10">
+
+    <!-- ================= 階段 1：遊戲設定 (SETUP) ================= -->
+    <section id="secSetup" class="space-y-4">
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-xl">
+        <h2 class="text-base font-bold text-amber-400 mb-1 flex items-center">
+          <span class="mr-2">壹.</span> 遊戲人數與玩家設定
+        </h2>
+        <p class="text-xs text-neutral-400 mb-4">固定進行三回合，每回合由12獸首中抽出4件（必為2真2假）。</p>
+
+        <!-- 人數選擇：僅 7 人與 8 人局 -->
+        <label class="block text-xs font-semibold text-neutral-300 mb-1.5">選擇玩家人數（無6人局）</label>
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <button type="button" onclick="setPlayerCount(7)" id="btnCount7" class="py-3 rounded-xl border text-sm font-bold transition flex flex-col items-center justify-center">
+            <span>7 人局</span>
+            <span class="text-[10px] font-normal text-neutral-400">4好 3壞 / 無姬雲浮</span>
+          </button>
+          <button type="button" onclick="setPlayerCount(8)" id="btnCount8" class="py-3 rounded-xl border text-sm font-bold transition flex flex-col items-center justify-center">
+            <span>8 人局</span>
+            <span class="text-[10px] font-normal text-neutral-400">5好 3壞 / 包含姬雲浮</span>
+          </button>
+        </div>
+
+                <!-- 玩家名稱與專屬顏色 (暱稱與顏色自動保存記憶) -->
+        <div class="mb-2 flex justify-between items-center">
+          <label class="text-xs font-semibold text-neutral-300">玩家名單與專屬顏色（黑紅橘黃綠藍紫白）</label>
+          <span class="text-[10px] text-amber-500 font-medium">✨ 暱稱與顏色已自動記憶</span>
+        </div>
+
+        <!-- 顏色重複警告提示 -->
+        <div id="colorDuplicateWarning" class="hidden p-3 bg-rose-950/80 border border-rose-600/80 rounded-xl text-xs text-rose-300 font-bold mb-3 text-center">
+          ⚠️ 偵測到有玩家顏色重複！每位玩家顏色必須唯一，請更換重複顏色後再開始。
+        </div>
+
+        <div id="playerSetupList" class="space-y-2.5 mb-6">
+          <!-- 動態渲染每位玩家輸入欄與顏色選擇按鈕 -->
+        </div>
+
+        <button id="btnStartGame" onclick="startGame()" class="w-full py-3.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-neutral-950 font-black text-base rounded-xl shadow-lg transition tracking-wider">
+          開始遊戲・隨機分配角色
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= 階段 2：確認角色（灰色字體、未查看不給按確認） ================= -->
+    <section id="secRoleReveal" class="hidden space-y-4">
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 text-center shadow-xl">
+        <div class="text-xs text-neutral-400 mb-1">請將裝置交給以下玩家</div>
+        
+        <div class="flex items-center justify-center space-x-2 my-2">
+          <span id="revealColorBadge" class="w-4 h-4 rounded-full border border-neutral-600 inline-block"></span>
+          <h2 id="revealPlayerName" class="text-2xl font-black text-neutral-100">玩家 1</h2>
+        </div>
+
+        <p class="text-xs text-neutral-400 mb-4">確認周遭無人窺探後，點擊下方卡片查閱自己的角色。</p>
+
+        <!-- 防窺角色卡 -->
+        <div onclick="toggleRoleCardMask()" class="bg-neutral-950 border border-neutral-800 rounded-xl p-6 my-3 cursor-pointer min-h-[160px] flex flex-col items-center justify-center relative shadow-inner hover:border-neutral-700 transition">
+          <div id="roleCardCover" class="absolute inset-0 bg-neutral-950/95 flex flex-col items-center justify-center z-10">
+            <div class="text-2xl mb-1">🔒</div>
+            <div class="text-xs font-bold text-amber-400">點擊翻開查看角色名字</div>
+            <div class="text-[10px] text-neutral-500 mt-1">（必須點開確認後，方可按確認按鈕）</div>
+          </div>
+          <!-- 統一灰色字體，僅顯示角色名字 -->
+          <div id="roleCardText" class="mask-blur">
+            <div class="text-xs text-neutral-500 mb-1">你的角色名字</div>
+            <div id="roleCharName" class="text-3xl font-black tracking-widest text-neutral-400 my-2">許願</div>
+            <div class="text-[10px] text-neutral-500">（請記住角色名稱，後續將根據此角色執行專屬能力）</div>
+          </div>
+        </div>
+
+        <div class="text-xs text-neutral-500 mb-4" id="revealProgressText">進度：1 / 7 位玩家</div>
+
+        <!-- 若未點擊查看角色名字則 disabled 不給按 -->
+        <button onclick="nextRoleReveal()" id="roleConfirmBtn" disabled class="w-full py-3 bg-neutral-900 text-neutral-600 font-bold rounded-xl border border-neutral-800 transition cursor-not-allowed opacity-50">
+          我已確認角色，換下一位玩家 ➔
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= 階段 3：回合交接防窺過渡 (HANDOVER) ================= -->
+    <section id="secHandover" class="hidden space-y-4">
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 text-center shadow-xl flex flex-col items-center justify-center min-h-[340px]">
+        <div class="text-xs text-neutral-500 mb-2">請將手機/裝置交給下一位玩家</div>
+        
+        <div class="my-4 p-5 bg-neutral-950 border border-neutral-800 rounded-2xl w-full">
+          <div class="text-xs text-neutral-400 mb-1">回合交接提示</div>
+          <div id="handoverMessage" class="text-xl font-black text-neutral-200 leading-relaxed">
+            請 <span id="handoverPlayerTag" class="text-amber-400 font-black">【黑色 玩家1】</span><br>確認現在是自己的回合
+          </div>
+        </div>
+
+        <button onclick="enterPlayerTurn()" class="w-full py-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-neutral-950 font-black text-base rounded-xl shadow-lg transition">
+          確認進入我的回合 ➔
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= 階段 4：玩家個人回合 (TURN a, b, c) ================= -->
+    <section id="secPlayerTurn" class="hidden space-y-4">
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 shadow-xl">
+        
+        <div class="flex justify-between items-center border-b border-neutral-800 pb-3 mb-3">
+          <div class="flex items-center space-x-2">
+            <span id="turnColorDot" class="w-3.5 h-3.5 rounded-full border border-neutral-500 inline-block"></span>
+            <span id="turnPlayerTitle" class="text-base font-black text-neutral-100">玩家 1 的回合</span>
+          </div>
+          <span id="turnRoundBadge" class="text-xs bg-amber-950/80 text-amber-300 border border-amber-700/50 px-2 py-0.5 rounded">第 1 回合</span>
+        </div>
+
+        <!-- 流程 a: 選擇想查驗的獸首 (從左至右按照十二生肖順序排序) -->
+        <div id="stepA" class="space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="text-xs font-bold text-amber-400 flex items-center">
+              <span class="w-5 h-5 rounded-full bg-amber-500 text-neutral-950 font-bold inline-flex items-center justify-center text-[10px] mr-1.5">a</span>
+              請點擊選擇想查驗的獸首
+            </h3>
+            <span id="stepALockTip" class="text-[10px] text-neutral-400">依生肖排序，點擊後鎖定</span>
+          </div>
+
+          <div id="roundBeastsGrid" class="grid grid-cols-4 gap-2">
+            <!-- 4 個獸首卡牌 -->
+          </div>
+
+          <!-- 查驗結果展示 -->
+          <div id="appraiseResultBox" class="hidden bg-neutral-950 border border-neutral-800 rounded-xl p-4 text-center space-y-2 mt-3">
+            <div class="text-xs text-neutral-400">查驗情報回饋：</div>
+            <div id="appraiseResultText" class="text-xl font-black text-amber-400 tracking-wider">
+              <!-- 動態填入 -->
+            </div>
+            <div id="appraiseSubNote" class="text-[10px] text-neutral-500">（註：查驗結果會受到玩家順序以及角色能力影響）</div>
+            <button onclick="goToStepB()" id="btnGoToStepB" class="w-full mt-2 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold text-xs rounded-lg border border-neutral-700">
+              下一步：角色能力 ➔
+            </button>
+          </div>
+        </div>
+
+        <!-- 陣營資訊：位置在查驗欄位(stepA)以及角色專屬能力欄位(stepB)中間，不顯示鄭國渠 -->
+        <div id="turnCampInfoBanner" class="hidden my-3 p-3 bg-neutral-950 border border-neutral-800 rounded-xl text-xs text-neutral-300">
+          <span class="text-amber-400 font-bold">陣營資訊：</span>
+          <span id="turnCampInfoText" class="font-bold text-neutral-200"></span>
+        </div>
+
+        <!-- 流程 b: 角色專屬能力階段 -->
+        <div id="stepB" class="hidden space-y-3 pt-3 border-t border-neutral-800 mt-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-amber-400 flex items-center">
+              <span class="w-5 h-5 rounded-full bg-amber-500 text-neutral-950 font-bold inline-flex items-center justify-center text-[10px] mr-1.5">b</span>
+              角色專屬能力階段
+            </h3>
+            <span id="bRoleNameLabel" class="text-xs text-neutral-400"></span>
+          </div>
+
+          <!-- 被藥不然偷襲的嘲諷提示與鎖定 -->
+          <div id="ambushedLockBanner" class="hidden p-3 bg-rose-950/80 border border-rose-700/80 rounded-xl text-center space-y-1">
+            <div id="ambushBannerTitle" class="text-base font-black text-rose-300">💥 哈哈！你被藥不然偷襲了</div>
+            <div id="ambushBannerSubtitle" class="text-xs text-neutral-300">你的角色能力已被鎖定封鎖，無法使用！</div>
+            <button onclick="finishStepB()" class="w-full mt-2 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-bold rounded-lg border border-neutral-700">
+              下一步:指定玩家 ➔
+            </button>
+          </div>
+
+          <!-- 角色專屬能力互動容器 (未被偷襲時顯示) -->
+          <div id="roleAbilityContainer" class="space-y-3">
+            <!-- 動態注入各角色的專屬能力控制介面 -->
+          </div>
+
+        </div>
+
+        <!-- 流程 c: 選擇下一位玩家 (按鈕顏色隨選中的人變化) -->
+        <div id="stepC" class="hidden space-y-3 pt-3 border-t border-neutral-800 mt-3">
+          <h3 class="text-xs font-bold text-amber-400 flex items-center">
+            <span class="w-5 h-5 rounded-full bg-amber-500 text-neutral-950 font-bold inline-flex items-center justify-center text-[10px] mr-1.5">c</span>
+            指定下一位查驗獸首的玩家
+          </h3>
+
+          <div id="stepCUncheckedSection">
+            <p class="text-xs text-neutral-400 mb-2">請點擊選擇當回合【尚未查驗】的玩家顏色：</p>
+            <div id="uninspectedPlayersList" class="grid grid-cols-2 gap-2">
+              <!-- 未查驗玩家顏色按鈕 -->
+            </div>
+
+            <!-- 置中的確認鈕 (顏色隨所選玩家改變) -->
+            <div id="stepCConfirmWrapper" class="hidden pt-4 text-center">
+              <button id="stepCConfirmBtn" onclick="confirmSelectedNextPlayer()" class="px-8 py-3.5 rounded-xl font-black text-sm shadow-xl transition transform hover:scale-[1.02]">
+                確認選擇此玩家 ➔
+              </button>
+            </div>
+          </div>
+
+          <!-- 若所有人皆已查驗，顯示前往鑑寶 -->
+          <div id="stepCAllDoneSection" class="hidden text-center py-2">
+            <p class="text-xs text-emerald-400 mb-3">本回合所有玩家皆已完成查驗！</p>
+            <button onclick="goToVoting()" class="w-full py-3.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-neutral-950 font-black text-base rounded-xl shadow-lg transition">
+              前往鑑寶（進入投票階段） 🏛️
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= 階段 5：鑑寶與投票 (VOTING & REVEAL) ================= -->
+    <section id="secVoting" class="hidden space-y-4">
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-xl">
+        <div class="flex justify-between items-center border-b border-neutral-800 pb-3 mb-3">
+          <div>
+            <h2 id="voteRoundTitle" class="text-base font-black text-amber-400">第 1 回合 - 鑑寶投票</h2>
+            <div class="text-xs text-neutral-400">排序由上至下依十二生肖順序，同票時生肖前者勝出</div>
+          </div>
+        </div>
+
+        <!-- 鑑寶投票大倒數按鈕 -->
+        <div class="mb-4">
+          <button type="button" onclick="startVotingCountdown()" id="btnVoteCountdown" class="w-full py-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-neutral-950 font-black text-base rounded-2xl shadow-xl transition flex items-center justify-center space-x-2 active:scale-[0.98]">
+            <span class="text-xl">⏱️</span>
+            <span id="countdownBtnText" class="tracking-wider">投票大倒數（3、2、1）</span>
+          </button>
+          <div id="countdownVisualDisplay" class="hidden mt-2.5 p-3 bg-neutral-950 border border-amber-500/60 rounded-xl text-center space-y-1">
+            <div class="text-xs text-neutral-400">語音倒數中：</div>
+            <div id="countdownStatusText" class="text-xl font-black text-amber-400 font-mono">跟票慢舉無效，321倒數投票...</div>
+          </div>
+        </div>
+
+        <!-- 投票表單：四個獸首名稱 + 減號/數字欄/加號 -->
+        <div id="votingInputsContainer" class="space-y-3 mb-5">
+          <!-- 4 個獸首投票輸入行 -->
+        </div>
+
+        <button onclick="calculateVoteResults()" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-neutral-950 font-black text-sm rounded-xl shadow-lg transition">
+          結算本輪投票結果 🗳️
+        </button>
+
+        <!-- 投票結果呈現 -->
+        <div id="voteResultArea" class="hidden mt-5 space-y-3 pt-4 border-t border-neutral-800">
+          <div class="text-xs font-bold text-neutral-300">投票統計結果：</div>
+          
+          <!-- 第一名：保留，但隱藏真假 -->
+          <div class="bg-neutral-950 border border-amber-600/40 rounded-xl p-3.5">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-amber-400">🥇 第一名獸首</span>
+              <span id="rank1Votes" class="text-xs text-neutral-400">得票：0票</span>
+            </div>
+            <div id="rank1Name" class="text-xl font-black text-neutral-100 my-1">鼠</div>
+            <div class="text-xs text-amber-300/80 bg-amber-950/40 border border-amber-800/40 p-2 rounded mt-2">
+              🔒 真偽資訊已隱藏保密（由館方秘密封存）
+            </div>
+          </div>
+
+          <!-- 第二名：保留，同時公開真實資訊（文字 + 語音） -->
+          <div class="bg-neutral-950 border border-emerald-600/60 rounded-xl p-3.5">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-emerald-400">🥈 第二名獸首</span>
+              <span id="rank2Votes" class="text-xs text-neutral-400">得票：0票</span>
+            </div>
+            <div id="rank2Name" class="text-xl font-black text-neutral-100 my-1">牛</div>
+            <div id="rank2TruthBox" class="text-sm font-black text-emerald-300 bg-emerald-950/60 border border-emerald-700/60 p-2.5 rounded mt-2">
+              <!-- 螢幕僅顯示【真品】或【贗品】 -->
+            </div>
+          </div>
+
+          <!-- 下一步按鈕 -->
+          <div class="pt-2">
+            <button onclick="finishRoundAndAdvance()" id="advanceNextRoundBtn" class="w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-amber-400 font-bold text-sm rounded-xl border border-neutral-700 transition">
+              進入下一回合 ➔
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= 階段 6：鑑人環節交接 (PERSON HANDOVER) ================= -->
+    <section id="secPersonHandover" class="hidden space-y-4">
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 text-center shadow-xl flex flex-col items-center justify-center min-h-[340px]">
+        <div class="text-xs text-neutral-500 mb-2">三回合鑑寶結束・進入鑑人投票</div>
+        
+        <div class="my-4 p-5 bg-neutral-950 border border-neutral-800 rounded-2xl w-full">
+          <div class="text-xs text-neutral-400 mb-1">請將裝置交給下一位投票玩家</div>
+          <div class="text-xl font-black text-neutral-200 leading-relaxed mt-2">
+            請 <span id="pvHandoverPlayerTag" class="text-amber-400 font-black">【黑色 玩家1】</span><br>確認現在是自己的投票回合
+          </div>
+        </div>
+
+        <button onclick="enterPersonVoteTurn()" class="w-full py-4 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-neutral-950 font-black text-base rounded-xl shadow-lg transition">
+          確認進入鑑人投票 ➔
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= 階段 7：鑑人投票操作 (PERSON VOTING) ================= -->
+    <section id="secPersonVoting" class="hidden space-y-4">
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-xl">
+        
+        <!-- 大字樣提示: 顏色字有色底 -->
+        <h2 id="pvBigTitle" class="text-xl font-black text-neutral-100 mb-2 flex items-center flex-wrap">
+          <!-- 動態填入: 玩家[色底字]，請投出您心目中的人選 -->
+        </h2>
+        
+        <!-- 小字樣提示 -->
+        <p class="text-xs text-neutral-400 mb-4 pb-3 border-b border-neutral-800">
+          鄭國渠也能投票，但不會有效果
+        </p>
+
+        <!-- 其他玩家顏色選擇格 (排除該玩家自己) -->
+        <div class="text-xs font-semibold text-neutral-300 mb-2">請點擊選擇您要指認的人選：</div>
+        <div id="pvCandidatesList" class="grid grid-cols-2 gap-2.5 mb-5">
+          <!-- 候選人顏色按鈕 -->
+        </div>
+
+        <!-- 置中確認按鈕 (按鈕顏色隨所選玩家改變) -->
+        <div id="pvConfirmWrapper" class="hidden text-center pt-2">
+          <button id="pvConfirmBtn" onclick="confirmPersonVote()" class="w-full py-3.5 rounded-xl font-black text-sm shadow-xl transition transform hover:scale-[1.01]">
+            確認投出此人選 ➔
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================= 階段 8：終局全覽 (GAME OVER) ================= -->
+    <section id="secGameOver" class="hidden space-y-4">
+      <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 text-center shadow-xl">
+        
+        <!-- 最上方：分數欄位與勝負判定 -->
+        <div id="finalScoreBanner" class="p-5 rounded-2xl border mb-5 shadow-2xl">
+          <!-- 動態填入分數計算與宣布勝利 -->
+        </div>
+
+        <!-- 三回合獸首結果 -->
+        <div class="text-xs font-bold text-neutral-300 text-left mb-2">三回合投票保留之獸首真偽揭曉：</div>
+        <div id="allRoundsSummary" class="space-y-2 mb-5 text-left text-xs">
+          <!-- 每輪第一名與第二名真假揭曉 -->
+        </div>
+
+        <!-- 鑑人投票統計結果 (分區：5個好人 / 老朝奉與藥不然 / 鄭國渠) -->
+        <div class="text-xs font-bold text-neutral-300 text-left mb-2">鑑人環節投票明細（顏色分區）：</div>
+        <div id="personVoteSummary" class="space-y-3 mb-5 text-left text-xs bg-neutral-950 p-3.5 rounded-xl border border-neutral-800">
+          <!-- 投票明細 -->
+        </div>
+
+
+
+        <!-- 最下方：每個玩家的每個操作紀錄明細 -->
+        <div class="text-xs font-bold text-neutral-300 text-left mb-2">全體玩家全程操作軌跡記錄：</div>
+        <div id="allPlayerActionLogs" class="space-y-3 mb-5 text-left text-xs bg-neutral-950 p-3.5 rounded-xl border border-neutral-800 max-h-96 overflow-y-auto">
+          <!-- 詳細軌跡列表 -->
+        </div>
+
+        <button onclick="confirmResetGame()" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-neutral-950 font-black text-sm rounded-xl transition">
+          再開一局新遊戲
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /* ============================================================
+       全域常數與調色盤 (Colors & Constants)
+       ============================================================ */
+    const STORAGE_KEY = 'gudong_boardgame_rules_v16';
+    const MASTER_PROFILES_KEY = 'gudong_master_profiles_v2';
+    const NICKNAME_STORAGE_KEY = 'gudong_saved_nicknames_v1';
+
+    // 8 種專屬顏色 (橙色改為橘色，綠色為鮮豔綠)
+    const COLOR_PALETTE = [
+      { id: 'black',  name: '黑', bgClass: 'bg-black text-white border-neutral-600', dotClass: 'bg-black border-neutral-400', hex: '#000000' },
+      { id: 'red',    name: '紅', bgClass: 'bg-red-600 text-white border-red-500',   dotClass: 'bg-red-600 border-red-400', hex: '#dc2626' },
+      { id: 'orange', name: '橘', bgClass: 'bg-orange-500 text-white border-orange-400', dotClass: 'bg-orange-500 border-orange-300', hex: '#ea580c' },
+      { id: 'yellow', name: '黃', bgClass: 'bg-yellow-400 text-neutral-950 border-yellow-300', dotClass: 'bg-yellow-400 border-yellow-300', hex: '#facc15' },
+      { id: 'green',  name: '綠', bgClass: 'bg-[#10e563] text-neutral-950 font-black border-[#00c853]', dotClass: 'bg-[#10e563] border-white', hex: '#10e563' },
+      { id: 'blue',   name: '藍', bgClass: 'bg-blue-600 text-white border-blue-500', dotClass: 'bg-blue-600 border-blue-400', hex: '#2563eb' },
+      { id: 'purple', name: '紫', bgClass: 'bg-purple-600 text-white border-purple-500', dotClass: 'bg-purple-600 border-purple-400', hex: '#9333ea' },
+      { id: 'white',  name: '白', bgClass: 'bg-slate-100 text-neutral-950 border-neutral-300', dotClass: 'bg-slate-100 border-neutral-400', hex: '#ffffff' }
+    ];
+
+    // 12 獸首單字順序 (十二生肖先後順序)
+    const ZODIAC_ORDER = ['鼠','牛','虎','兔','龍','蛇','馬','羊','猴','雞','狗','豬'];
+
+    let voiceActive = true;
+    let audioCtx = null;
+
+    // 主遊戲狀態模型
+    let G = {
+      step: 'setup',            // 'setup' | 'roles' | 'handover' | 'turn' | 'voting' | 'person_handover' | 'person_voting' | 'gameover'
+      playerCount: 8,           // 7 (4好3壞無姬雲浮) 或 8 (5好3壞含姬雲浮)
+      players: [],              // [{ id, name, colorId, role, isAmbushed, isPermanentlyAmbushed, confusedRound }]
+      rounds: [],               // [ { roundNum, beasts: [ { name, isReal, votes } ], voteResults: null } ]
+      currentRoundIdx: 0,       // 0, 1, 2
+      starterPlayerId: null,    // 首家 ID
+      lastPlayerIdOfRound: null,// 每輪尾家 ID
+      activePlayerId: null,     // 當前操作玩家 ID
+      inspectedPlayerIds: [],   // 本輪已查驗玩家 ID
+      
+      // 當前輪次特殊動態狀態
+      blockedBeastThisRound: null,      // 鄭國渠封鎖的獸首名稱 (該輪後續玩家查驗均為無法辨別真偽！)
+      laoChaoFengActiveThisRound: false,// 老朝奉該輪是否啟動擾亂
+      
+      // 當前玩家操作過程暫存
+      inspectedBeastsInTurn: [],        // 許願查驗 2 個，其餘查驗 1 個
+      turnSubStep: 'a',                 // 'a' | 'b' | 'c'
+      pendingNextPlayerId: null,        // 步驟 c 暫存
+      
+      // 角色能力鎖定旗標 (確認前不給按下一步)
+      abilityLockedInCurrentTurn: false,
+      
+      // 藥不然暫存狀態
+      yaoSelectedTargetId: null,
+      
+      // 方震暫存狀態
+      fangZhenSelectedTargetId: null,
+      fangZhenRevealedCamp: null,
+
+      // 角色確認階段狀態
+      roleRevealIdx: 0,
+      roleCardUnmasked: false,
+
+      // 鑑人投票
+      personVoteIdx: 0,
+      pendingCandidateId: null,
+      personVotes: {},                  // { [voterId]: targetPlayerId }
+
+      // 全程軌跡紀錄
+      actionLogs: {}                    // { [playerId]: { r1: { inspect:[], ability:'', next:'' }, r2:..., r3:..., vote:'' } }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      renderAll();
+    });
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(G));
+        const ind = document.getElementById('saveNotice');
+        if (ind) {
+          ind.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span><span>已即時存檔</span>';
+          setTimeout(() => {
+            ind.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-neutral-500 inline-block"></span><span>存檔中</span>';
+          }, 1000);
+        }
+      } catch (e) {
+        console.error('saveState error', e);
+      }
+    }
+
+    function getMasterProfiles() {
+      try {
+        const raw = localStorage.getItem(MASTER_PROFILES_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length >= 8) {
+            return parsed;
+          }
+        }
+      } catch (e) {}
+      return [
+        { id: 1, name: '玩家 1', colorId: 'black' },
+        { id: 2, name: '玩家 2', colorId: 'red' },
+        { id: 3, name: '玩家 3', colorId: 'orange' },
+        { id: 4, name: '玩家 4', colorId: 'yellow' },
+        { id: 5, name: '玩家 5', colorId: 'green' },
+        { id: 6, name: '玩家 6', colorId: 'blue' },
+        { id: 7, name: '玩家 7', colorId: 'purple' },
+        { id: 8, name: '玩家 8', colorId: 'white' }
+      ];
+    }
+
+    function saveMasterProfiles(profiles) {
+      try {
+        localStorage.setItem(MASTER_PROFILES_KEY, JSON.stringify(profiles));
+      } catch (e) {}
+    }
+
+    function syncPlayersFromMaster() {
+      const master = getMasterProfiles();
+      const count = G.playerCount || 8;
+      G.players = [];
+      for (let i = 0; i < count; i++) {
+        const pId = i + 1;
+        const m = master[i] || { id: pId, name: `玩家 ${pId}`, colorId: COLOR_PALETTE[i % COLOR_PALETTE.length].id };
+        G.players.push({
+          id: pId,
+          name: m.name,
+          colorId: m.colorId,
+          role: '',
+          isAmbushed: false,
+          isPermanentlyAmbushed: false,
+          confusedRound: null
+        });
+        if (!G.actionLogs[pId]) {
+          G.actionLogs[pId] = {
+            r1: { inspect: [], ability: '無操作', next: '' },
+            r2: { inspect: [], ability: '無操作', next: '' },
+            r3: { inspect: [], ability: '無操作', next: '' },
+            vote: '未投票'
+          };
+        }
+      }
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.step) {
+            G = parsed;
+            document.getElementById('restoreBanner').classList.remove('hidden');
+            return;
+          }
+        } catch (e) {
+          console.error('loadState parse error', e);
+        }
+      }
+      G.playerCount = 8;
+      syncPlayersFromMaster();
+    }
+
+    function confirmResetGame() {
+      if (confirm('確定要結束當前對局並重新開局嗎？暱稱與顏色設定將自動保留，對局預設為8人局。')) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
+    }
+
+    /* ============================================================
+       階段 1：設定 (SETUP)
+       ============================================================ */
+    function setPlayerCount(count) {
+      G.playerCount = count;
+      syncPlayersFromMaster();
+      saveState();
+      renderSetupView();
+    }
+
+    function setPlayerColor(playerIdx, colorId) {
+      G.players[playerIdx].colorId = colorId;
+      const master = getMasterProfiles();
+      if (master[playerIdx]) {
+        master[playerIdx].colorId = colorId;
+        saveMasterProfiles(master);
+      }
+      saveState();
+      renderSetupView();
+    }
+
+    function setPlayerName(playerIdx, val) {
+      const newName = val.trim() || `玩家 ${playerIdx + 1}`;
+      G.players[playerIdx].name = newName;
+      const master = getMasterProfiles();
+      if (master[playerIdx]) {
+        master[playerIdx].name = newName;
+        saveMasterProfiles(master);
+      }
+      saveState();
+    }
+
+    function renderSetupView() {
+      const b7 = document.getElementById('btnCount7');
+      const b8 = document.getElementById('btnCount8');
+      if (G.playerCount === 7) {
+        b7.className = 'py-3 rounded-xl border border-amber-500 bg-amber-500/20 text-amber-300 font-bold transition flex flex-col items-center justify-center';
+        b8.className = 'py-3 rounded-xl border border-neutral-800 bg-neutral-900/80 text-neutral-400 font-bold transition flex flex-col items-center justify-center hover:border-neutral-700';
+      } else {
+        b8.className = 'py-3 rounded-xl border border-amber-500 bg-amber-500/20 text-amber-300 font-bold transition flex flex-col items-center justify-center';
+        b7.className = 'py-3 rounded-xl border border-neutral-800 bg-neutral-900/80 text-neutral-400 font-bold transition flex flex-col items-center justify-center hover:border-neutral-700';
+      }
+
+      // 檢查顏色重複
+      const colorCounts = {};
+      G.players.forEach(p => {
+        colorCounts[p.colorId] = (colorCounts[p.colorId] || 0) + 1;
+      });
+      const hasDuplicate = Object.values(colorCounts).some(cnt => cnt > 1);
+
+      // 警告提示與開始按鈕鎖定控制
+      const warnEl = document.getElementById('colorDuplicateWarning');
+      const startBtn = document.getElementById('btnStartGame');
+      if (hasDuplicate) {
+        if (warnEl) warnEl.classList.remove('hidden');
+        if (startBtn) {
+          startBtn.disabled = true;
+          startBtn.className = 'w-full py-3.5 bg-neutral-900 border border-neutral-800 text-neutral-600 font-black text-base rounded-xl shadow cursor-not-allowed opacity-50 tracking-wider';
+          startBtn.innerHTML = '⚠️ 顏色重複，請更換重複顏色後開始';
+        }
+      } else {
+        if (warnEl) warnEl.classList.add('hidden');
+        if (startBtn) {
+          startBtn.disabled = false;
+          startBtn.className = 'w-full py-3.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-neutral-950 font-black text-base rounded-xl shadow-lg transition tracking-wider';
+          startBtn.innerHTML = '開始遊戲・隨機分配角色';
+        }
+      }
+
+      const container = document.getElementById('playerSetupList');
+      container.innerHTML = '';
+      G.players.forEach((p, idx) => {
+        const curColor = COLOR_PALETTE.find(c => c.id === p.colorId) || COLOR_PALETTE[0];
+        const isDup = colorCounts[p.colorId] > 1;
+        const row = document.createElement('div');
+        row.className = `p-2.5 bg-neutral-950 border rounded-xl space-y-2 transition ${isDup ? 'border-rose-600 ring-1 ring-rose-500/60 bg-rose-950/20' : 'border-neutral-800'}`;
+        
+        let colorPills = '';
+        COLOR_PALETTE.forEach(c => {
+          const isSelected = c.id === p.colorId;
+          colorPills += `
+            <button type="button" onclick="setPlayerColor(${idx}, '${c.id}')" title="${c.name}" class="w-6 h-6 rounded-full border ${c.dotClass} ${isSelected ? 'ring-2 ring-amber-400 scale-110' : 'opacity-60 hover:opacity-100'} transition text-[10px] flex items-center justify-center font-bold">
+              ${isSelected ? '✓' : ''}
+            </button>
+          `;
+        });
+
+        row.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <span class="w-4 h-4 rounded-full ${curColor.dotClass} border"></span>
+            <input type="text" value="${p.name}" oninput="setPlayerName(${idx}, this.value)" class="flex-1 text-xs bg-neutral-900 border border-neutral-700 rounded-lg px-2.5 py-1.5 text-neutral-200 outline-none focus:border-amber-500">
+            <span class="text-xs text-neutral-400 font-semibold px-2 py-0.5 rounded border border-neutral-700">${curColor.name}色</span>
+            ${isDup ? '<span class="text-[10px] text-rose-400 font-bold bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800">顏色重複</span>' : ''}
+          </div>
+          <div class="flex items-center space-x-1.5 pt-1 overflow-x-auto">
+            <span class="text-[10px] text-neutral-500 mr-1">選色:</span>
+            ${colorPills}
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function startGame() {
+      // 儲存暱稱至本地
+      // saveMasterProfiles
+
+      // 角色配置：
+      // 7 人局：4 好 3 壞 (許願, 方震, 黃煙煙, 木戶加奈, 老朝奉, 藥不然, 鄭國渠) - 無姬雲浮
+      // 8 人局：5 好 3 壞 (加上 姬雲浮)
+      let roleList = ['許願', '方震', '黃煙煙', '木戶加奈', '老朝奉', '藥不然', '鄭國渠'];
+      if (G.playerCount >= 8) {
+        roleList.push('姬雲浮');
+      }
+      roleList.sort(() => Math.random() - 0.5);
+
+      G.players.forEach((p, idx) => {
+        p.role = roleList[idx];
+        p.isAmbushed = false;
+        p.isPermanentlyAmbushed = false;
+        if (p.role === '黃煙煙' || p.role === '木戶加奈') {
+          p.confusedRound = Math.floor(Math.random() * 3);
+        } else {
+          p.confusedRound = null;
+        }
+      });
+
+      // 生成三回合十二獸首 (每回合4件，必2真2假)
+      const shuffled = [...ZODIAC_ORDER].sort(() => Math.random() - 0.5);
+      G.rounds = [];
+      for (let r = 0; r < 3; r++) {
+        const beasts4 = shuffled.slice(r * 4, (r + 1) * 4);
+        const realFlags = [true, true, false, false].sort(() => Math.random() - 0.5);
+        const roundBeastObjs = beasts4.map((bName, bIdx) => ({
+          name: bName,
+          isReal: realFlags[bIdx],
+          votes: 0
+        }));
+        G.rounds.push({
+          roundNum: r + 1,
+          beasts: roundBeastObjs,
+          voteResults: null
+        });
+      }
+
+      G.currentRoundIdx = 0;
+      G.roleRevealIdx = 0;
+      G.roleCardUnmasked = false;
+      G.blockedBeastThisRound = null;
+      G.laoChaoFengActiveThisRound = false;
+      G.personVotes = {};
+      G.step = 'roles';
+      saveState();
+      renderAll();
+      const c0 = COLOR_PALETTE.find(x => x.id === G.players[0].colorId) || COLOR_PALETTE[0];
+      speak(`進入確認角色環節，${c0.name}色確認`);
+    }
+
+    /* ============================================================
+       階段 2：確認角色 (未查看則不給按確認按鈕)
+       ============================================================ */
+    function toggleRoleCardMask() {
+      G.roleCardUnmasked = !G.roleCardUnmasked;
+      const cover = document.getElementById('roleCardCover');
+      const text = document.getElementById('roleCardText');
+      const confirmBtn = document.getElementById('roleConfirmBtn');
+      const charNameEl = document.getElementById('roleCharName');
+
+      if (G.roleCardUnmasked) {
+        // 點開時才注入角色名稱，徹底杜絕交接時的瞬間走光
+        const p = G.players[G.roleRevealIdx];
+        charNameEl.innerText = p ? p.role : '???';
+        cover.classList.add('opacity-0', 'pointer-events-none');
+        text.classList.add('unmasked');
+        // 解鎖按鈕
+        confirmBtn.disabled = false;
+        confirmBtn.className = "w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-amber-400 font-bold rounded-xl border border-neutral-700 transition cursor-pointer";
+      } else {
+        // 遮蔽時立即清空文字為 ???
+        charNameEl.innerText = '???';
+        cover.classList.remove('opacity-0', 'pointer-events-none');
+        text.classList.remove('unmasked');
+        // 重新鎖定按鈕
+        confirmBtn.disabled = true;
+        confirmBtn.className = "w-full py-3 bg-neutral-900 text-neutral-600 font-bold rounded-xl border border-neutral-800 transition cursor-not-allowed opacity-50";
+      }
+    }
+
+    function renderRoleRevealView() {
+      const p = G.players[G.roleRevealIdx];
+      if (!p) return;
+
+      const pColor = COLOR_PALETTE.find(c => c.id === p.colorId) || COLOR_PALETTE[0];
+      document.getElementById('revealPlayerName').innerText = p.name;
+      const badge = document.getElementById('revealColorBadge');
+      badge.className = `w-4 h-4 rounded-full border ${pColor.dotClass} inline-block`;
+
+      // 遮蔽狀態下一律保持 ???，不載入下一家角色文字
+      document.getElementById('roleCharName').innerText = '???';
+      document.getElementById('roleCharName').className = "text-3xl font-black tracking-widest text-neutral-400 my-2";
+
+      document.getElementById('revealProgressText').innerText = `進度：${G.roleRevealIdx + 1} / ${G.players.length} 位玩家`;
+
+      // 初始鎖定卡片與按鈕
+      G.roleCardUnmasked = false;
+      document.getElementById('roleCardCover').classList.remove('opacity-0', 'pointer-events-none');
+      document.getElementById('roleCardText').classList.remove('unmasked');
+
+      const confirmBtn = document.getElementById('roleConfirmBtn');
+      confirmBtn.disabled = true;
+      confirmBtn.className = "w-full py-3 bg-neutral-900 text-neutral-600 font-bold rounded-xl border border-neutral-800 transition cursor-not-allowed opacity-50";
+    }
+
+    function nextRoleReveal() {
+      if (!G.roleCardUnmasked) return; // 防呆
+
+      // 點擊確認換人瞬間，先立即可見地蓋上遮罩並清空角色文字，防止交接瞬間看到下一家
+      G.roleCardUnmasked = false;
+      document.getElementById('roleCharName').innerText = '???';
+      document.getElementById('roleCardCover').classList.remove('opacity-0', 'pointer-events-none');
+      document.getElementById('roleCardText').classList.remove('unmasked');
+
+      if (G.roleRevealIdx < G.players.length - 1) {
+        G.roleRevealIdx++;
+        saveState();
+        renderRoleRevealView();
+        const nextP = G.players[G.roleRevealIdx];
+        const nextC = COLOR_PALETTE.find(x => x.id === nextP.colorId) || COLOR_PALETTE[0];
+        speak(`${nextC.name}色確認`);
+      } else {
+        const randStarterIdx = Math.floor(Math.random() * G.players.length);
+        const starter = G.players[randStarterIdx];
+        G.starterPlayerId = starter.id;
+        G.activePlayerId = starter.id;
+        G.inspectedPlayerIds = [];
+        G.inspectedBeastsInTurn = [];
+        G.blockedBeastThisRound = null;
+        G.laoChaoFengActiveThisRound = false;
+        G.turnSubStep = 'a';
+        G.step = 'handover';
+        saveState();
+        renderAll();
+
+        const starterLabel = getPlayerLabel(starter);
+        speak(`第一局開始！首家是：${starterLabel}。請首家準備操作。`);
+      }
+    }
+
+    function getPlayerLabel(p) {
+      const c = COLOR_PALETTE.find(x => x.id === p.colorId) || COLOR_PALETTE[0];
+      return `${c.name}色 ${p.name}`;
+    }
+
+    /* ============================================================
+       階段 3：交接防窺過渡 (HANDOVER)
+       ============================================================ */
+    function renderHandoverView() {
+      const nextP = G.players.find(p => p.id === G.activePlayerId);
+      if (!nextP) return;
+      const c = COLOR_PALETTE.find(x => x.id === nextP.colorId) || COLOR_PALETTE[0];
+      document.getElementById('handoverPlayerTag').innerHTML = `<span class="px-2 py-0.5 rounded ${c.bgClass}">${c.name}色</span> <span class="text-amber-300 font-bold">${nextP.name}</span>`;
+    }
+
+    function enterPlayerTurn() {
+      G.step = 'turn';
+      G.turnSubStep = 'a';
+      G.inspectedBeastsInTurn = [];
+      G.pendingNextPlayerId = null;
+      G.yaoSelectedTargetId = null;
+      G.fangZhenSelectedTargetId = null;
+      G.fangZhenRevealedCamp = null;
+      G.abilityLockedInCurrentTurn = false;
+      saveState();
+      renderAll();
+    }
+
+    /* ============================================================
+       階段 4：玩家個人回合流程 (TURN a, b, c)
+       ============================================================ */
+    function renderTurnView() {
+      const curP = G.players.find(p => p.id === G.activePlayerId);
+      if (!curP) return;
+      const c = COLOR_PALETTE.find(x => x.id === curP.colorId) || COLOR_PALETTE[0];
+
+      document.getElementById('turnPlayerTitle').innerText = `${c.name}色 ${curP.name} 的回合`;
+      document.getElementById('turnColorDot').className = `w-3.5 h-3.5 rounded-full border ${c.dotClass} inline-block`;
+      document.getElementById('turnRoundBadge').innerText = `第 ${G.currentRoundIdx + 1} 回合`;
+
+      // 陣營資訊：位置在查驗欄位(stepA)及角色能力欄位(stepB)中間
+      // 「鄭國渠不會有陣營資訊，他不會知道隊友是誰」 -> 僅老朝奉與藥不然可見！
+      const banner = document.getElementById('turnCampInfoBanner');
+      const bannerText = document.getElementById('turnCampInfoText');
+      const isEvilInformed = ['老朝奉', '藥不然'].includes(curP.role);
+
+      if (isEvilInformed) {
+        banner.classList.remove('hidden');
+        const laoP = G.players.find(x => x.role === '老朝奉');
+        const yaoP = G.players.find(x => x.role === '藥不然');
+        let infoStr = '';
+        if (laoP) {
+          const lc = COLOR_PALETTE.find(x => x.id === laoP.colorId);
+          infoStr += `${lc.name}: (老朝奉)  `;
+        }
+        if (yaoP) {
+          const yc = COLOR_PALETTE.find(x => x.id === yaoP.colorId);
+          infoStr += `${yc.name}: (藥不然)`;
+        }
+        bannerText.innerText = infoStr;
+      } else {
+        banner.classList.add('hidden');
+      }
+
+      // 步驟 a 渲染：4 個獸首從左至右按照十二生肖順序排序
+      renderStepABeasts(curP);
+
+      // 控制各步驟區塊顯示
+      const boxResult = document.getElementById('appraiseResultBox');
+      const stepB = document.getElementById('stepB');
+      const stepC = document.getElementById('stepC');
+
+      if (G.turnSubStep === 'a') {
+        boxResult.classList.toggle('hidden', G.inspectedBeastsInTurn.length === 0);
+        stepB.classList.add('hidden');
+        stepC.classList.add('hidden');
+      } else if (G.turnSubStep === 'b') {
+        boxResult.classList.remove('hidden');
+        stepB.classList.remove('hidden');
+        stepC.classList.add('hidden');
+        renderStepBRoleAbility(curP);
+      } else if (G.turnSubStep === 'c') {
+        boxResult.classList.remove('hidden');
+        stepB.classList.remove('hidden');
+        stepC.classList.remove('hidden');
+        renderStepC();
+      }
+    }
+
+    // 渲染步驟 a 的 4 個獸首 (從左至右依生肖順序排序)
+    function renderStepABeasts(curP) {
+      const curRound = G.rounds[G.currentRoundIdx];
+      const grid = document.getElementById('roundBeastsGrid');
+      grid.innerHTML = '';
+
+      const sortedBeasts = [...curRound.beasts].sort((a, b) => ZODIAC_ORDER.indexOf(a.name) - ZODIAC_ORDER.indexOf(b.name));
+
+      const isUnderAmbush = curP.isAmbushed || curP.isPermanentlyAmbushed;
+      let isLocked = false;
+      if (curP.role === '許願') {
+        // 許願若處於被偷襲狀態後就只能查驗一個獸首
+        isLocked = isUnderAmbush ? (G.inspectedBeastsInTurn.length >= 1) : (G.inspectedBeastsInTurn.length >= 2);
+      } else if (curP.role === '方震') {
+        isLocked = false;
+      } else {
+        isLocked = G.inspectedBeastsInTurn.length >= 1;
+      }
+
+      sortedBeasts.forEach((b) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        const inspectedObj = G.inspectedBeastsInTurn.find(item => item.beastName === b.name);
+        const isChosen = !!inspectedObj;
+
+        btn.className = `p-3 rounded-xl text-center transition flex flex-col items-center justify-center border ${
+          isChosen 
+            ? 'bg-amber-950/80 border-amber-500 ring-2 ring-amber-400' 
+            : (isLocked ? 'bg-neutral-900/50 border-neutral-800 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-neutral-950 hover:bg-neutral-800 border-neutral-700 hover:border-amber-500 cursor-pointer')
+        }`;
+
+        btn.innerHTML = `
+          <span class="text-2xl font-black text-amber-300">${b.name}</span>
+          <span class="text-[9px] text-neutral-400 mt-1">${isChosen ? '已查驗' : (isLocked ? '已鎖定' : '點擊')}</span>
+        `;
+
+        if (!isLocked) {
+          btn.onclick = () => appraiseBeast(b);
+        }
+        grid.appendChild(btn);
+      });
+
+      const tip = document.getElementById('stepALockTip');
+      if (curP.role === '許願') {
+        if (isUnderAmbush) {
+          tip.innerText = `【許願】遭偷襲，只能查驗 1 個獸首（已查驗 ${G.inspectedBeastsInTurn.length}/1）`;
+        } else {
+          tip.innerText = `【許願】需查驗 2 個獸首（已查驗 ${G.inspectedBeastsInTurn.length}/2）`;
+        }
+      } else if (curP.role === '方震') {
+        tip.innerText = `【方震】無法查驗獸首（查驗不鎖定）`;
+      } else {
+        tip.innerText = isLocked ? '已查驗一種，畫面已鎖定' : '只能查驗一種，查驗後即鎖定';
+      }
+
+      const nextBtn = document.getElementById('btnGoToStepB');
+      const targetInspectCount = (curP.role === '許願' && !isUnderAmbush) ? 2 : 1;
+      nextBtn.disabled = G.inspectedBeastsInTurn.length < targetInspectCount;
+      nextBtn.className = `w-full mt-2 py-2.5 rounded-lg border font-bold text-xs ${G.inspectedBeastsInTurn.length < targetInspectCount ? 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700'}`;
+    }
+
+    // 查驗獸首計算 (嚴格遵守顯示格式)
+    function appraiseBeast(b) {
+      const curP = G.players.find(p => p.id === G.activePlayerId);
+
+      const isUnderAmbush = curP.isAmbushed || curP.isPermanentlyAmbushed;
+      const maxInspectCount = (curP.role === '許願' && !isUnderAmbush) ? 2 : 1;
+      if (curP.role !== '方震' && G.inspectedBeastsInTurn.length >= maxInspectCount) return;
+
+      let displayText = '';
+
+      // 檢查 1：是否遭藥不然偷襲 (不帶【獸首】為 前綴)
+// isUnderAmbush already declared above
+      if (isUnderAmbush) {
+        const ambushTexts = ['你眼前一片黑', '你被幹了', '你被偷襲了', '獸首被偷襲'];
+        displayText = ambushTexts[Math.floor(Math.random() * ambushTexts.length)];
+      }
+      // 檢查 2：方震 -> 【獸首】    看不懂???
+      else if (curP.role === '方震') {
+        displayText = `【${b.name}】    看不懂???`;
+      }
+      // 檢查 3：鄭國渠封鎖 -> 【獸首】    無法辨別真偽！
+      else if (G.blockedBeastThisRound === b.name) {
+        displayText = `【${b.name}】    無法辨別真偽！`;
+      }
+      // 檢查 4：黃煙煙 / 木戶加奈困惑輪次 -> 【獸首】    無法辨別真偽！
+      else if ((curP.role === '黃煙煙' || curP.role === '木戶加奈') && curP.confusedRound === G.currentRoundIdx) {
+        displayText = `【${b.name}】    無法辨別真偽！`;
+      }
+      // 檢查 5：正常真偽計算
+      else {
+        let isReal = b.isReal;
+        const immuneToLao = ['姬雲浮', '老朝奉', '藥不然', '鄭國渠'].includes(curP.role);
+        if (G.laoChaoFengActiveThisRound && !immuneToLao) {
+          isReal = !isReal;
+        }
+        displayText = `【${b.name}】    ${isReal ? '【真品】' : '【贗品】'}`;
+      }
+
+      G.inspectedBeastsInTurn.push({
+        beastName: b.name,
+        resultText: displayText
+      });
+
+      // 寫入軌跡
+      const rKey = `r${G.currentRoundIdx + 1}`;
+      if (!G.actionLogs[curP.id]) G.actionLogs[curP.id] = { r1:{}, r2:{}, r3:{}, vote:'' };
+      if (!G.actionLogs[curP.id][rKey]) G.actionLogs[curP.id][rKey] = { inspect:[], ability:'無操作', next:'' };
+      G.actionLogs[curP.id][rKey].inspect.push(displayText);
+
+      // 渲染查驗結果
+      const resContainer = document.getElementById('appraiseResultText');
+      resContainer.innerHTML = G.inspectedBeastsInTurn.map(item => `
+        <div class="my-1.5">${item.resultText}</div>
+      `).join('');
+
+      document.getElementById('appraiseResultBox').classList.remove('hidden');
+      saveState();
+      renderStepABeasts(curP);
+    }
+
+    function goToStepB() {
+      G.turnSubStep = 'b';
+      saveState();
+      renderTurnView();
+    }
+
+    // 渲染步驟 b：角色能力
+    // 1. 顏色字體為大且明顯的黃色 (text-amber-300)
+    // 2. 角色能力沒確認前，無法按下一步
+    // 3. 方震強制發動能力，無法跳過
+    // 4. 若老朝奉被偷襲，顯示嘲諷大字樣: 有這種隊友，你還玩得下去!?
+    function renderStepBRoleAbility(curP) {
+      document.getElementById('bRoleNameLabel').innerText = `角色：${curP.role}`;
+      const ambushBanner = document.getElementById('ambushedLockBanner');
+      const container = document.getElementById('roleAbilityContainer');
+
+      const isUnderAmbush = curP.isAmbushed || curP.isPermanentlyAmbushed;
+      if (isUnderAmbush) {
+        ambushBanner.classList.remove('hidden');
+        container.classList.add('hidden');
+
+        // 老朝奉被偷襲時的專屬嘲諷大字樣
+        if (curP.role === '老朝奉') {
+          document.getElementById('ambushBannerTitle').className = "text-xl font-black text-rose-400";
+          document.getElementById('ambushBannerTitle').innerText = "💥 有這種隊友，你還玩得下去!?";
+          document.getElementById('ambushBannerSubtitle').innerText = "你被隊友藥不然偷襲了！角色能力已被鎖定封鎖！";
+        } else {
+          document.getElementById('ambushBannerTitle').className = "text-base font-black text-rose-300";
+          document.getElementById('ambushBannerTitle').innerText = "💥 哈哈！你被藥不然偷襲了";
+          document.getElementById('ambushBannerSubtitle').innerText = "你的角色能力已被鎖定封鎖，無法使用！";
+        }
+        return;
+      }
+
+      ambushBanner.classList.add('hidden');
+      container.classList.remove('hidden');
+      container.innerHTML = '';
+
+      const isLocked = G.abilityLockedInCurrentTurn;
+
+      // ---------------- 【許願】 & 【姬雲浮】 & 【黃煙煙】 & 【木戶加奈】：無主動技能 ----------------
+      if (['許願', '姬雲浮', '黃煙煙', '木戶加奈'].includes(curP.role)) {
+        container.innerHTML = `
+          <div class="p-3 bg-neutral-950 border border-neutral-800 rounded-xl text-center space-y-2">
+            <div class="text-xs text-neutral-400">當前角色無主動觸發之角色能力。</div>
+            <button onclick="finishStepB()" class="w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold text-xs rounded-lg border border-neutral-700">
+              下一步:指定玩家 ➔
+            </button>
+          </div>
+        `;
+      }
+      // ---------------- 【方震】：強制發動能力，無法跳過；確認後鎖定 ----------------
+      else if (curP.role === '方震') {
+        const otherPlayers = G.players.filter(p => p.id !== curP.id);
+        let playerButtons = '';
+        otherPlayers.forEach(p => {
+          const pc = COLOR_PALETTE.find(x => x.id === p.colorId);
+          const isSelected = G.fangZhenSelectedTargetId === p.id;
+          playerButtons += `
+            <button type="button" onclick="fangZhenSelectPlayer(${p.id})" ${isLocked ? 'disabled' : ''} class="p-3 rounded-xl border bg-neutral-900 border-neutral-700 hover:border-amber-500 transition flex items-center justify-between ${isSelected ? 'ring-2 ring-amber-400 border-amber-400' : ''} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}">
+              <span class="text-amber-300 text-xl font-black">${pc.name}</span>
+              <span class="text-xs text-neutral-300 font-bold">${p.name}</span>
+            </button>
+          `;
+        });
+
+        container.innerHTML = `
+          <div class="p-4 bg-neutral-950 border border-neutral-800 rounded-xl space-y-3">
+            <div class="text-xs text-neutral-300 font-bold">【方震技能】請點擊查驗一名其他顏色玩家的所屬陣營（強制查驗）：</div>
+            <div class="grid grid-cols-2 gap-2">
+              ${playerButtons}
+            </div>
+
+            <!-- 確認按鈕 (未確認前不給下一步，強制發動) -->
+            <div class="${!isLocked ? '' : 'hidden'} text-center pt-1">
+              <button type="button" onclick="fangZhenConfirmCheck()" ${G.fangZhenSelectedTargetId ? '' : 'disabled'} class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-neutral-950 font-black text-xs rounded-xl shadow-md disabled:opacity-40 disabled:cursor-not-allowed">
+                確認查驗該玩家陣營 ➔
+              </button>
+            </div>
+
+            <div id="fzResultBox" class="${G.fangZhenRevealedCamp ? '' : 'hidden'} p-3 bg-neutral-900 border border-amber-500/60 rounded-xl text-center space-y-1">
+              <div class="text-xs text-neutral-400">查驗陣營結果：</div>
+              <div class="text-lg font-black text-amber-400">${G.fangZhenRevealedCamp || ''}</div>
+              <div class="text-[10px] text-neutral-500">（頁面已確認鎖定）</div>
+            </div>
+
+            <!-- 下一步按鈕：沒確認前 disabled -->
+            <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-2.5 rounded-lg border font-bold text-xs ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700 cursor-pointer' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
+              ${isLocked ? '下一步:指定玩家 ➔' : '請先點選玩家並確認查驗'}
+            </button>
+          </div>
+        `;
+      }
+      // ---------------- 【老朝奉】：開關擾亂 (沒確認前無法按下一步) ----------------
+      else if (curP.role === '老朝奉') {
+        container.innerHTML = `
+          <div class="p-4 bg-neutral-950 border border-neutral-800 rounded-xl space-y-3">
+            <div class="text-xs text-neutral-200 leading-relaxed font-bold">
+              老朝奉，是否改變除了姬雲浮和藥來以外的許願陣營玩家之後的鑑定結果？
+            </div>
+            <div class="flex items-center justify-between bg-neutral-900 p-3 rounded-xl border border-neutral-700">
+              <span class="text-xs text-neutral-300">擾亂能力狀態：</span>
+              <button type="button" onclick="toggleLaoChaoFengAbility()" ${isLocked ? 'disabled' : ''} class="px-4 py-2 rounded-lg font-black text-xs transition ${G.laoChaoFengActiveThisRound ? 'bg-rose-600 text-white shadow-lg' : 'bg-neutral-800 text-neutral-400 border border-neutral-600'} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}">
+                ${G.laoChaoFengActiveThisRound ? '🔴 開啟（發動擾亂）' : '⚪ 關閉（不發動）'}
+              </button>
+            </div>
+            <p class="text-[10px] text-neutral-500">開啟後，本回合在老朝奉之後行動的許願陣營（非姬雲浮）查驗真假全面反轉！</p>
+            
+            <div class="${isLocked ? 'hidden' : ''}">
+              <button type="button" onclick="laoChaoFengConfirm()" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-neutral-950 font-black text-xs rounded-xl shadow-md">
+                確認鎖定能力設定 ➔
+              </button>
+            </div>
+
+            <div class="${isLocked ? '' : 'hidden'} text-xs text-center text-amber-400 font-bold">
+              ✓ 老朝奉能力已確認並鎖定。
+            </div>
+
+            <!-- 下一步按鈕：沒確認前 disabled -->
+            <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-2.5 rounded-lg border font-bold text-xs ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700 cursor-pointer' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
+              ${isLocked ? '下一步:指定玩家 ➔' : '請先點擊確認能力設定'}
+            </button>
+          </div>
+        `;
+      }
+      // ---------------- 【鄭國渠】：封鎖該回合獸首 (沒確認前無法按下一步) ----------------
+      else if (curP.role === '鄭國渠') {
+        const curRound = G.rounds[G.currentRoundIdx];
+        const sortedRoundBeasts = [...curRound.beasts].sort((a, b) => ZODIAC_ORDER.indexOf(a.name) - ZODIAC_ORDER.indexOf(b.name));
+        let beastBtns = '';
+        sortedRoundBeasts.forEach(b => {
+          const isSelected = G.blockedBeastThisRound === b.name;
+          beastBtns += `
+            <button type="button" onclick="zhengBlockBeast('${b.name}')" ${isLocked ? 'disabled' : ''} class="p-2.5 rounded-xl border font-black text-sm transition ${isSelected ? 'bg-rose-600 text-white border-rose-500 ring-2 ring-rose-400' : 'bg-neutral-900 text-neutral-200 border-neutral-700 hover:border-amber-500'} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}">
+              封鎖【${b.name}】
+            </button>
+          `;
+        });
+
+        container.innerHTML = `
+          <div class="p-4 bg-neutral-950 border border-neutral-800 rounded-xl space-y-3">
+            <div class="text-xs text-neutral-200 font-bold">請選擇要封鎖的獸首（依生肖排序）：</div>
+            <div class="grid grid-cols-4 gap-1.5">
+              ${beastBtns}
+            </div>
+            <button type="button" onclick="zhengBlockBeast(null)" ${isLocked ? 'disabled' : ''} class="w-full py-2.5 rounded-xl border font-bold text-xs transition ${G.blockedBeastThisRound === null ? 'bg-neutral-800 text-amber-400 border-amber-500' : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:bg-neutral-800'} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}">
+              不想封鎖
+            </button>
+            <div id="zhengBlockNotice" class="text-xs text-center text-rose-400 font-bold ${G.blockedBeastThisRound ? '' : 'hidden'}">
+              已封鎖【${G.blockedBeastThisRound || ''}】，後續玩家查驗將顯示「無法辨別真偽！」
+            </div>
+            
+            <div class="${isLocked ? 'hidden' : ''}">
+              <button type="button" onclick="zhengConfirm()" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-neutral-950 font-black text-xs rounded-xl shadow-md">
+                確認鎖定封鎖選擇 ➔
+              </button>
+            </div>
+
+            <!-- 下一步按鈕：沒確認前 disabled -->
+            <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-2.5 rounded-lg border font-bold text-xs ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700 cursor-pointer' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
+              ${isLocked ? '下一步:指定玩家 ➔' : '請先點擊確認封鎖選擇'}
+            </button>
+          </div>
+        `;
+      }
+      // ---------------- 【藥不然】：分前後兩堆，顏色字為黃色，幹死他顯示在格內，沒確認前無法按下一步 ----------------
+      else if (curP.role === '藥不然') {
+        const frontPlayers = G.players.filter(p => p.id !== curP.id && G.inspectedPlayerIds.includes(p.id));
+        const backPlayers = G.players.filter(p => p.id !== curP.id && !G.inspectedPlayerIds.includes(p.id));
+
+        function generateYaoButtons(list) {
+          if (list.length === 0) return '<div class="text-[11px] text-neutral-500 py-1">（無）</div>';
+          let html = '<div class="grid grid-cols-2 gap-2">';
+          list.forEach(p => {
+            const pc = COLOR_PALETTE.find(x => x.id === p.colorId);
+            const isSelected = G.yaoSelectedTargetId === p.id;
+            const isLao = p.role === '老朝奉';
+            html += `
+              <button type="button" onclick="yaoSelectTarget(${p.id})" ${isLocked ? 'disabled' : ''} class="p-3 rounded-xl border bg-neutral-900 border-neutral-700 hover:border-amber-500 transition flex flex-col items-center justify-center relative ${isSelected ? 'ring-2 ring-rose-500 border-rose-500' : ''} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}">
+                <span class="text-amber-300 text-xl font-black">${pc.name}</span>
+                <span class="text-[11px] text-neutral-300 font-bold">${p.name}</span>
+                ${isSelected ? `<span class="text-rose-400 font-black text-xs mt-1">幹死他${isLao ? ' <span class="text-amber-300 block text-[10px]">(你忍心嗎?)</span>' : ''}</span>` : ''}
+              </button>
+            `;
+          });
+          html += '</div>';
+          return html;
+        }
+
+        container.innerHTML = `
+          <div class="p-4 bg-neutral-950 border border-neutral-800 rounded-xl space-y-3">
+            <div class="text-xs text-neutral-300 font-bold">【藥不然偷襲】請點選欲偷襲之玩家（點擊顯示幹死他）：</div>
+            
+            <div>
+              <div class="text-[11px] font-bold text-neutral-400 mb-1">◀ 順序在前的玩家：</div>
+              ${generateYaoButtons(frontPlayers)}
+            </div>
+
+            <div>
+              <div class="text-[11px] font-bold text-neutral-400 mb-1">▶ 順序在後的玩家：</div>
+              ${generateYaoButtons(backPlayers)}
+            </div>
+
+            <div class="flex space-x-2 pt-2 ${isLocked ? 'hidden' : ''}">
+              <button type="button" onclick="yaoSkipAmbush()" class="flex-1 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 border border-neutral-700 font-bold text-xs rounded-xl">
+                跳過不偷襲
+              </button>
+              <button type="button" onclick="yaoConfirmAmbush()" id="btnYaoConfirm" class="flex-1 py-2.5 bg-rose-700 hover:bg-rose-600 text-white font-black text-xs rounded-xl shadow-md disabled:opacity-40 disabled:cursor-not-allowed" ${G.yaoSelectedTargetId ? '' : 'disabled'}>
+                確認偷襲 ➔
+              </button>
+            </div>
+
+            <div class="${isLocked ? '' : 'hidden'} text-xs text-center text-rose-400 font-bold">
+              ✓ 藥不然偷襲已確認並鎖定。
+            </div>
+
+            <!-- 下一步按鈕：沒確認前 disabled -->
+            <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-2.5 rounded-lg border font-bold text-xs ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700 cursor-pointer' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
+              ${isLocked ? '下一步:指定玩家 ➔' : '請先點擊確認偷襲或跳過'}
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    // 方震選擇玩家
+    function fangZhenSelectPlayer(targetId) {
+      if (G.abilityLockedInCurrentTurn) return;
+      G.fangZhenSelectedTargetId = targetId;
+      saveState();
+      renderStepBRoleAbility(G.players.find(p => p.id === G.activePlayerId));
+    }
+
+    // 方震確認查驗陣營（鎖定）
+    function fangZhenConfirmCheck() {
+      if (!G.fangZhenSelectedTargetId) return;
+      const curP = G.players.find(p => p.id === G.activePlayerId);
+      const targetP = G.players.find(p => p.id === G.fangZhenSelectedTargetId);
+      const tc = COLOR_PALETTE.find(x => x.id === targetP.colorId);
+
+      const goodCampRoles = ['許願', '方震', '黃煙煙', '木戶加奈', '姬雲浮'];
+      const campName = goodCampRoles.includes(targetP.role) ? '許願陣營' : '老朝奉陣營';
+
+      G.fangZhenRevealedCamp = `${tc.name}色 ${targetP.name} 為 【${campName}】`;
+      G.abilityLockedInCurrentTurn = true;
+
+      const rKey = `r${G.currentRoundIdx + 1}`;
+      if (!G.actionLogs[curP.id]) G.actionLogs[curP.id] = {};
+      if (!G.actionLogs[curP.id][rKey]) G.actionLogs[curP.id][rKey] = { inspect:[], ability:'無操作', next:'' };
+      G.actionLogs[curP.id][rKey].ability = `查驗 ${tc.name}色 ${targetP.name} ➔ ${campName}`;
+
+      saveState();
+      renderStepBRoleAbility(curP);
+    }
+
+    // 老朝奉開關與鎖定
+    function toggleLaoChaoFengAbility() {
+      if (G.abilityLockedInCurrentTurn) return;
+      G.laoChaoFengActiveThisRound = !G.laoChaoFengActiveThisRound;
+      saveState();
+      renderStepBRoleAbility(G.players.find(p => p.id === G.activePlayerId));
+    }
+
+    function laoChaoFengConfirm() {
+      const curP = G.players.find(p => p.id === G.activePlayerId);
+      G.abilityLockedInCurrentTurn = true;
+      const rKey = `r${G.currentRoundIdx + 1}`;
+      if (!G.actionLogs[curP.id]) G.actionLogs[curP.id] = {};
+      if (!G.actionLogs[curP.id][rKey]) G.actionLogs[curP.id][rKey] = { inspect:[], ability:'無操作', next:'' };
+      G.actionLogs[curP.id][rKey].ability = G.laoChaoFengActiveThisRound ? '發動擾亂（反轉好人真偽）' : '未發動擾亂';
+      saveState();
+      renderStepBRoleAbility(curP);
+    }
+
+    // 鄭國渠封鎖
+    function zhengBlockBeast(beastName) {
+      if (G.abilityLockedInCurrentTurn) return;
+      G.blockedBeastThisRound = beastName;
+      saveState();
+      renderStepBRoleAbility(G.players.find(p => p.id === G.activePlayerId));
+    }
+
+    function zhengConfirm() {
+      const curP = G.players.find(p => p.id === G.activePlayerId);
+      G.abilityLockedInCurrentTurn = true;
+      const rKey = `r${G.currentRoundIdx + 1}`;
+      if (!G.actionLogs[curP.id]) G.actionLogs[curP.id] = {};
+      if (!G.actionLogs[curP.id][rKey]) G.actionLogs[curP.id][rKey] = { inspect:[], ability:'無操作', next:'' };
+      G.actionLogs[curP.id][rKey].ability = G.blockedBeastThisRound ? `封鎖【${G.blockedBeastThisRound}】` : '不想封鎖';
+      saveState();
+      renderStepBRoleAbility(curP);
+    }
+
+    // 藥不然偷襲
+    function yaoSelectTarget(targetId) {
+      if (G.abilityLockedInCurrentTurn) return;
+      G.yaoSelectedTargetId = targetId;
+      saveState();
+      renderStepBRoleAbility(G.players.find(p => p.id === G.activePlayerId));
+    }
+
+    function yaoSkipAmbush() {
+      const curP = G.players.find(p => p.id === G.activePlayerId);
+      G.abilityLockedInCurrentTurn = true;
+      G.yaoSelectedTargetId = null;
+      const rKey = `r${G.currentRoundIdx + 1}`;
+      if (!G.actionLogs[curP.id]) G.actionLogs[curP.id] = {};
+      if (!G.actionLogs[curP.id][rKey]) G.actionLogs[curP.id][rKey] = { inspect:[], ability:'無操作', next:'' };
+      G.actionLogs[curP.id][rKey].ability = '跳過不偷襲';
+      saveState();
+      renderStepBRoleAbility(curP);
+    }
+
+    function yaoConfirmAmbush() {
+      if (!G.yaoSelectedTargetId || G.abilityLockedInCurrentTurn) return;
+      const curP = G.players.find(p => p.id === G.activePlayerId);
+      const targetP = G.players.find(p => p.id === G.yaoSelectedTargetId);
+      const tc = COLOR_PALETTE.find(x => x.id === targetP.colorId);
+
+      if (targetP.role === '方震') {
+        targetP.isAmbushed = true;
+        const xuP = G.players.find(p => p.role === '許願');
+        if (xuP) xuP.isAmbushed = true;
+      } else if (targetP.role === '姬雲浮') {
+        targetP.isPermanentlyAmbushed = true;
+      } else {
+        targetP.isAmbushed = true;
+      }
+
+      G.abilityLockedInCurrentTurn = true;
+      const rKey = `r${G.currentRoundIdx + 1}`;
+      if (!G.actionLogs[curP.id]) G.actionLogs[curP.id] = {};
+      if (!G.actionLogs[curP.id][rKey]) G.actionLogs[curP.id][rKey] = { inspect:[], ability:'無操作', next:'' };
+      G.actionLogs[curP.id][rKey].ability = `偷襲 ${tc.name}色 ${targetP.name}`;
+
+      saveState();
+      renderStepBRoleAbility(curP);
+    }
+
+    function finishStepB() {
+      const curP = G.players.find(p => p.id === G.activePlayerId);
+      if (curP.isAmbushed) {
+        curP.isAmbushed = false;
+      }
+
+      G.turnSubStep = 'c';
+      if (!G.inspectedPlayerIds.includes(G.activePlayerId)) {
+        G.inspectedPlayerIds.push(G.activePlayerId);
+      }
+      G.lastPlayerIdOfRound = G.activePlayerId;
+      saveState();
+      renderTurnView();
+    }
+
+    // 流程 c: 選擇下一家玩家
+    function renderStepC() {
+      const uninspectedSec = document.getElementById('stepCUncheckedSection');
+      const allDoneSec = document.getElementById('stepCAllDoneSection');
+      const listContainer = document.getElementById('uninspectedPlayersList');
+      const confirmWrapper = document.getElementById('stepCConfirmWrapper');
+      const confirmBtn = document.getElementById('stepCConfirmBtn');
+
+      const uninspected = G.players.filter(p => !G.inspectedPlayerIds.includes(p.id));
+
+      if (uninspected.length === 0) {
+        uninspectedSec.classList.add('hidden');
+        allDoneSec.classList.remove('hidden');
+        
+        const curP = G.players.find(p => p.id === G.activePlayerId);
+        const rKey = `r${G.currentRoundIdx + 1}`;
+        if (G.actionLogs[curP.id] && G.actionLogs[curP.id][rKey]) {
+          G.actionLogs[curP.id][rKey].next = '最後一位（前往鑑寶）';
+        }
+      } else {
+        uninspectedSec.classList.remove('hidden');
+        allDoneSec.classList.add('hidden');
+        listContainer.innerHTML = '';
+
+        uninspected.forEach(p => {
+          const c = COLOR_PALETTE.find(x => x.id === p.colorId) || COLOR_PALETTE[0];
+          const isSelected = G.pendingNextPlayerId === p.id;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `p-3 rounded-xl border text-xs font-bold transition flex items-center justify-between ${c.bgClass} ${isSelected ? 'ring-4 ring-white scale-[1.03]' : 'opacity-85 hover:opacity-100'}`;
+          btn.innerHTML = `
+            <span>${c.name}色</span>
+            <span class="text-sm font-black">${p.name}</span>
+            <span>${isSelected ? '✓' : ''}</span>
+          `;
+          btn.onclick = () => {
+            G.pendingNextPlayerId = p.id;
+            saveState();
+            renderStepC();
+          };
+          listContainer.appendChild(btn);
+        });
+
+        if (G.pendingNextPlayerId) {
+          const selectedPlayer = G.players.find(p => p.id === G.pendingNextPlayerId);
+          const sc = COLOR_PALETTE.find(x => x.id === selectedPlayer.colorId) || COLOR_PALETTE[0];
+          confirmWrapper.classList.remove('hidden');
+          confirmBtn.className = `px-8 py-3.5 rounded-xl font-black text-sm shadow-xl transition transform hover:scale-[1.02] border ${sc.bgClass}`;
+          confirmBtn.innerHTML = `確認選擇此玩家（${sc.name}色 ${selectedPlayer.name}） ➔`;
+        } else {
+          confirmWrapper.classList.add('hidden');
+        }
+      }
+    }
+
+    function confirmSelectedNextPlayer() {
+      if (!G.pendingNextPlayerId) return;
+
+      const curP = G.players.find(p => p.id === G.activePlayerId);
+      const nextP = G.players.find(p => p.id === G.pendingNextPlayerId);
+      const ntc = COLOR_PALETTE.find(x => x.id === nextP.colorId);
+
+      const rKey = `r${G.currentRoundIdx + 1}`;
+      if (G.actionLogs[curP.id] && G.actionLogs[curP.id][rKey]) {
+        G.actionLogs[curP.id][rKey].next = `指定下家：${ntc.name}色 ${nextP.name}`;
+      }
+
+      G.activePlayerId = G.pendingNextPlayerId;
+      G.pendingNextPlayerId = null;
+      G.step = 'handover';
+      saveState();
+      renderAll();
+
+      const nextLabel = getPlayerLabel(nextP);
+      speak(`${ntc.name}色`);
+    }
+
+    /* ============================================================
+       階段 5：鑑寶與投票 (VOTING & REVEAL)
+       ============================================================ */
+    let votingCountdownTimer = null;
+    function startVotingCountdown() {
+      if (votingCountdownTimer) clearTimeout(votingCountdownTimer);
+
+      const btn = document.getElementById('btnVoteCountdown');
+      const disp = document.getElementById('countdownVisualDisplay');
+      const statusText = document.getElementById('countdownStatusText');
+
+      disp.classList.remove('hidden');
+      btn.disabled = true;
+      btn.classList.add('opacity-70');
+
+      // 語音：跟票慢舉無效，321倒數投票，三，，，二，，，一，，，請投票
+      speak("跟票慢舉無效，三二一倒數投票，三，，，二，，，一，，，請投票");
+      statusText.innerText = "跟票慢舉無效，321倒數投票...";
+
+      votingCountdownTimer = setTimeout(() => {
+        statusText.innerHTML = "<span class='text-4xl text-amber-300 font-black'>3</span>";
+        votingCountdownTimer = setTimeout(() => {
+          statusText.innerHTML = "<span class='text-4xl text-amber-300 font-black'>2</span>";
+          votingCountdownTimer = setTimeout(() => {
+            statusText.innerHTML = "<span class='text-4xl text-amber-300 font-black'>1</span>";
+            votingCountdownTimer = setTimeout(() => {
+              // 舉手投票字樣改為請投票
+              statusText.innerHTML = "<span class='text-2xl text-emerald-400 font-black'>請投票</span>";
+              votingCountdownTimer = setTimeout(() => {
+                disp.classList.add('hidden');
+                btn.disabled = false;
+                btn.classList.remove('opacity-70');
+              }, 1600);
+            }, 1000);
+          }, 1100);
+        }, 1100);
+      }, 2200);
+    }
+
+    function goToVoting() {
+      G.step = 'voting';
+      saveState();
+      renderAll();
+      speak("前往鑑寶");
+    }
+
+    function renderVotingView() {
+      document.getElementById('voteRoundTitle').innerText = `第 ${G.currentRoundIdx + 1} 回合 - 鑑寶投票`;
+      const curRound = G.rounds[G.currentRoundIdx];
+
+      curRound.beasts.sort((a, b) => ZODIAC_ORDER.indexOf(a.name) - ZODIAC_ORDER.indexOf(b.name));
+
+      const container = document.getElementById('votingInputsContainer');
+      container.innerHTML = '';
+
+      curRound.beasts.forEach((b, bIdx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-3 bg-neutral-950 border border-neutral-800 rounded-xl';
+        row.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <span class="text-xs text-neutral-500">生肖序</span>
+            <span class="text-xl font-black text-amber-300 w-12">${b.name}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button type="button" onclick="adjustVote(${bIdx}, -1)" class="w-8 h-8 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-black text-base flex items-center justify-center border border-neutral-700 active:scale-95 transition">-</button>
+            <input type="number" min="0" value="${b.votes || 0}" id="voteInput_${bIdx}" oninput="updateVoteValue(${bIdx}, this.value)" class="w-14 text-center bg-neutral-900 border border-neutral-700 focus:border-amber-500 rounded-lg py-1.5 text-base font-bold text-neutral-100 outline-none">
+            <button type="button" onclick="adjustVote(${bIdx}, 1)" class="w-8 h-8 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-black text-base flex items-center justify-center border border-neutral-700 active:scale-95 transition">+</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      const resArea = document.getElementById('voteResultArea');
+      if (curRound.voteResults) {
+        showCalculatedResults(curRound.voteResults, false);
+      } else {
+        resArea.classList.add('hidden');
+      }
+    }
+
+    function adjustVote(bIdx, delta) {
+      const curRound = G.rounds[G.currentRoundIdx];
+      curRound.beasts[bIdx].votes = Math.max(0, (curRound.beasts[bIdx].votes || 0) + delta);
+      saveState();
+      renderVotingView();
+    }
+
+    function updateVoteValue(bIdx, val) {
+      const curRound = G.rounds[G.currentRoundIdx];
+      curRound.beasts[bIdx].votes = Math.max(0, parseInt(val) || 0);
+      saveState();
+    }
+
+    function calculateVoteResults() {
+      const curRound = G.rounds[G.currentRoundIdx];
+
+      const sorted = [...curRound.beasts].sort((a, b) => {
+        if (b.votes !== a.votes) {
+          return b.votes - a.votes;
+        }
+        return ZODIAC_ORDER.indexOf(a.name) - ZODIAC_ORDER.indexOf(b.name);
+      });
+
+      const rank1 = sorted[0];
+      const rank2 = sorted[1];
+
+      curRound.voteResults = {
+        rank1: { name: rank1.name, votes: rank1.votes, isReal: rank1.isReal },
+        rank2: { name: rank2.name, votes: rank2.votes, isReal: rank2.isReal }
+      };
+
+      saveState();
+      showCalculatedResults(curRound.voteResults, true);
+    }
+
+    function showCalculatedResults(res, triggerSpeech) {
+      document.getElementById('voteResultArea').classList.remove('hidden');
+
+      document.getElementById('rank1Name').innerText = res.rank1.name;
+      document.getElementById('rank1Votes').innerText = `得票：${res.rank1.votes} 票`;
+
+      document.getElementById('rank2Name').innerText = res.rank2.name;
+      document.getElementById('rank2Votes').innerText = `得票：${res.rank2.votes} 票`;
+      
+      const truthBox = document.getElementById('rank2TruthBox');
+      const isReal = res.rank2.isReal;
+      
+      if (isReal) {
+        truthBox.className = "text-base font-black text-emerald-300 bg-emerald-950/60 border border-emerald-700/60 p-3 rounded mt-2";
+        truthBox.innerText = `📢 第二名公開真實資訊：【真品】`;
+      } else {
+        truthBox.className = "text-base font-black text-rose-300 bg-rose-950/60 border border-rose-700/60 p-3 rounded mt-2";
+        truthBox.innerText = `📢 第二名公開真實資訊：【贗品】`;
+      }
+
+      if (triggerSpeech) {
+        if (isReal) {
+          speak(`${res.rank2.name}～是真品。爽啦爽啦SONG啦！`);
+        } else {
+          speak(`${res.rank2.name}～是贗品。真的很慘，沒救！`);
+        }
+      }
+
+      const nextBtn = document.getElementById('advanceNextRoundBtn');
+      if (G.currentRoundIdx < 2) {
+        nextBtn.innerText = `進入第 ${G.currentRoundIdx + 2} 回合 ➔`;
+      } else {
+        nextBtn.innerText = `三回合結束・前往鑑人環節 ➔`;
+      }
+    }
+
+    function finishRoundAndAdvance() {
+      if (G.currentRoundIdx < 2) {
+        G.currentRoundIdx++;
+        const nextStarter = G.players.find(p => p.id === G.lastPlayerIdOfRound) || G.players[0];
+        G.starterPlayerId = nextStarter.id;
+        G.activePlayerId = nextStarter.id;
+        G.inspectedPlayerIds = [];
+        G.inspectedBeastsInTurn = [];
+        G.blockedBeastThisRound = null;
+        G.laoChaoFengActiveThisRound = false;
+        G.pendingNextPlayerId = null;
+        G.turnSubStep = 'a';
+        G.step = 'handover';
+        saveState();
+        renderAll();
+
+        const starterLabel = getPlayerLabel(nextStarter);
+        speak(`進入第 ${G.currentRoundIdx + 1} 回合！本輪由上一輪尾家：${starterLabel} 擔任首家。`);
+      } else {
+        G.personVoteIdx = 0;
+        G.pendingCandidateId = null;
+        G.step = 'person_handover';
+        saveState();
+        renderAll();
+        const curVoter = G.players[0];
+        const vc = COLOR_PALETTE.find(x => x.id === curVoter.colorId) || COLOR_PALETTE[0];
+        speak(`三回合鑑寶結束・進入鑑人投票，${vc.name}色`);
+      }
+    }
+
+    /* ============================================================
+       階段 6 & 7：鑑人環節 (PERSON VOTING)
+       ============================================================ */
+    function renderPersonHandoverView() {
+      const curVoter = G.players[G.personVoteIdx];
+      if (!curVoter) return;
+      const c = COLOR_PALETTE.find(x => x.id === curVoter.colorId) || COLOR_PALETTE[0];
+      document.getElementById('pvHandoverPlayerTag').innerHTML = `<span class="px-2 py-0.5 rounded ${c.bgClass}">${c.name}色</span> <span class="text-amber-300 font-bold">${curVoter.name}</span>`;
+    }
+
+    function enterPersonVoteTurn() {
+      G.step = 'person_voting';
+      G.pendingCandidateId = null;
+      saveState();
+      renderAll();
+    }
+
+    function renderPersonVotingView() {
+      const curVoter = G.players[G.personVoteIdx];
+      if (!curVoter) return;
+      const c = COLOR_PALETTE.find(x => x.id === curVoter.colorId) || COLOR_PALETTE[0];
+
+      // 顏色字要有顏色色底
+      document.getElementById('pvBigTitle').innerHTML = `
+        <span>玩家</span>
+        <span class="${c.bgClass} px-2.5 py-0.5 rounded font-black mx-1.5 inline-block text-sm sm:text-base">${c.name}</span>
+        <span>，請投出您心目中的人選</span>
+      `;
+
+      const listContainer = document.getElementById('pvCandidatesList');
+      listContainer.innerHTML = '';
+      const otherPlayers = G.players.filter(p => p.id !== curVoter.id);
+
+      otherPlayers.forEach(p => {
+        const pc = COLOR_PALETTE.find(x => x.id === p.colorId) || COLOR_PALETTE[0];
+        const isSelected = G.pendingCandidateId === p.id;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `p-3.5 rounded-xl border text-xs font-bold transition flex items-center justify-between ${pc.bgClass} ${isSelected ? 'ring-4 ring-white scale-[1.03]' : 'opacity-85 hover:opacity-100'}`;
+        btn.innerHTML = `
+          <span>${pc.name}色</span>
+          <span class="text-sm font-black">${p.name}</span>
+          <span>${isSelected ? '✓' : ''}</span>
+        `;
+        btn.onclick = () => {
+          G.pendingCandidateId = p.id;
+          saveState();
+          renderPersonVotingView();
+        };
+        listContainer.appendChild(btn);
+      });
+
+      const confirmWrapper = document.getElementById('pvConfirmWrapper');
+      const confirmBtn = document.getElementById('pvConfirmBtn');
+
+      if (G.pendingCandidateId) {
+        const chosenPlayer = G.players.find(p => p.id === G.pendingCandidateId);
+        const chosenColor = COLOR_PALETTE.find(x => x.id === chosenPlayer.colorId) || COLOR_PALETTE[0];
+        confirmWrapper.classList.remove('hidden');
+        confirmBtn.className = `w-full py-3.5 rounded-xl font-black text-sm shadow-xl transition border ${chosenColor.bgClass}`;
+        confirmBtn.innerHTML = `確認投給：${chosenColor.name}色 ${chosenPlayer.name} ➔`;
+      } else {
+        confirmWrapper.classList.add('hidden');
+      }
+    }
+
+    function confirmPersonVote() {
+      if (!G.pendingCandidateId) return;
+
+      const curVoter = G.players[G.personVoteIdx];
+      G.personVotes[curVoter.id] = G.pendingCandidateId;
+
+      const targetP = G.players.find(p => p.id === G.pendingCandidateId);
+      const tc = COLOR_PALETTE.find(x => x.id === targetP.colorId);
+      if (G.actionLogs[curVoter.id]) {
+        G.actionLogs[curVoter.id].vote = `投給：${tc.name} (${targetP.role})`;
+      }
+
+      G.pendingCandidateId = null;
+
+      if (G.personVoteIdx < G.players.length - 1) {
+        G.personVoteIdx++;
+        G.step = 'person_handover';
+        saveState();
+        renderAll();
+        const nextVoter = G.players[G.personVoteIdx];
+        const nvc = COLOR_PALETTE.find(x => x.id === nextVoter.colorId) || COLOR_PALETTE[0];
+        speak(`${nvc.name}色`);
+      } else {
+        G.step = 'gameover';
+        saveState();
+        renderAll();
+      }
+    }
+
+    /* ============================================================
+       階段 8：終局全覽與計分 (GAMEOVER)
+       ============================================================ */
+    function renderGameOverView() {
+      let totalScore = 0;
+      let scoreDetails = [];
+
+      // 1. 三回合投票保留之真品獸首 (每件 +1 分)
+      let realSavedCount = 0;
+      G.rounds.forEach(r => {
+        if (r.voteResults) {
+          if (r.voteResults.rank1.isReal) realSavedCount++;
+          if (r.voteResults.rank2.isReal) realSavedCount++;
+        }
+      });
+      totalScore += realSavedCount;
+      // 說明欄：鑒寶環節共得到X分 (分數顯示藍色)
+      scoreDetails.push(`鑒寶環節共得到<span class="text-blue-400 font-bold">${realSavedCount}分</span>`);
+
+      const goodRoleNames = ['許願', '方震', '姬雲浮', '黃煙煙', '木戶加奈'];
+      const goodPlayers = G.players.filter(p => goodRoleNames.includes(p.role));
+      const laoPlayer = G.players.find(p => p.role === '老朝奉');
+      const yaoPlayer = G.players.find(p => p.role === '藥不然');
+      const fangPlayer = G.players.find(p => p.role === '方震');
+      const xuPlayer = G.players.find(p => p.role === '許願');
+
+      // 2. 好人陣營投老朝奉 (1分顯示藍色，0分顯示紅色)
+      if (laoPlayer) {
+        const goodVotesForLao = goodPlayers.filter(p => G.personVotes[p.id] === laoPlayer.id).length;
+        const majorityThreshold = goodPlayers.length / 2;
+        if (goodVotesForLao > majorityThreshold) {
+          totalScore += 1;
+          scoreDetails.push(`老朝奉被找到 (${goodVotesForLao}/${goodPlayers.length} 票)，許願方陣營加<span class="text-blue-400 font-bold">1分</span>`);
+        } else {
+          scoreDetails.push(`老朝奉沒有被找到 (${goodVotesForLao}/${goodPlayers.length} 票)，許願方陣營加<span class="text-red-500 font-bold">0分</span>`);
+        }
+      }
+
+      // 3. 【藥不然】沒能夠投到【方震】則加 1 分 (1分顯示藍色，0分顯示紅色)
+      if (yaoPlayer && fangPlayer) {
+        const yaoHitFang = (G.personVotes[yaoPlayer.id] === fangPlayer.id);
+        if (!yaoHitFang) {
+          totalScore += 1;
+          scoreDetails.push(`方震沒有被找到，許願方陣營加<span class="text-blue-400 font-bold">1分</span>`);
+        } else {
+          scoreDetails.push(`方震被找到，許願方陣營加<span class="text-red-500 font-bold">0分</span>`);
+        }
+      }
+
+      // 4. 【老朝奉】沒能夠投到【許願】則加 2 分 (2分顯示藍色，0分顯示紅色)
+      if (laoPlayer && xuPlayer) {
+        const laoHitXu = (G.personVotes[laoPlayer.id] === xuPlayer.id);
+        if (!laoHitXu) {
+          totalScore += 2;
+          scoreDetails.push(`老朝奉沒有被找到，許願方陣營加<span class="text-blue-400 font-bold">2分</span>`);
+        } else {
+          scoreDetails.push(`老朝奉投中許願，許願方陣營加<span class="text-red-500 font-bold">0分</span>`);
+        }
+      }
+
+      // 勝負判定：>= 6 分 許願陣營獲勝； 0~5 分 老朝奉陣營獲勝
+      const isXuWon = totalScore >= 6;
+      const banner = document.getElementById('finalScoreBanner');
+      if (isXuWon) {
+        banner.className = 'p-5 rounded-2xl border border-amber-500 bg-amber-950/60 text-center mb-5 shadow-2xl';
+        banner.innerHTML = `
+          <div class="text-xs text-amber-400 font-bold mb-1">【對局最終結果】</div>
+          <div class="text-3xl font-black text-amber-300 mb-2">🎉 許願陣營 獲勝！</div>
+          <div class="text-2xl font-black text-emerald-400 font-mono mb-3">最終總分：${totalScore} 分（≥ 6分）</div>
+          <div class="text-xs text-neutral-300 text-left space-y-1.5 bg-neutral-950 p-3 rounded-xl border border-neutral-800">
+            ${scoreDetails.map(d => `<div>• ${d}</div>`).join('')}
+          </div>
+        `;
+        playAudioEffect(true);
+        speak("許願陣營 獲勝");
+      } else {
+        banner.className = 'p-5 rounded-2xl border border-rose-700 bg-rose-950/60 text-center mb-5 shadow-2xl';
+        banner.innerHTML = `
+          <div class="text-xs text-rose-400 font-bold mb-1">【對局最終結果】</div>
+          <div class="text-3xl font-black text-rose-400 mb-2">😈 老朝奉陣營 獲勝！</div>
+          <div class="text-2xl font-black text-rose-300 font-mono mb-3">最終總分：${totalScore} 分（0～5分）</div>
+          <div class="text-xs text-neutral-300 text-left space-y-1.5 bg-neutral-950 p-3 rounded-xl border border-neutral-800">
+            ${scoreDetails.map(d => `<div>• ${d}</div>`).join('')}
+          </div>
+        `;
+        playAudioEffect(false);
+        speak("老朝奉陣營 獲勝");
+      }
+
+      // 2. 三回合全部獸首真偽揭曉 (揭曉所有 12 件獸首)
+      const summaryContainer = document.getElementById('allRoundsSummary');
+      summaryContainer.innerHTML = '';
+      G.rounds.forEach(r => {
+        const res = r.voteResults;
+        const box = document.createElement('div');
+        box.className = 'p-3.5 bg-neutral-950 border border-neutral-800 rounded-xl space-y-2';
+
+        let beastsListHtml = '';
+        r.beasts.forEach(b => {
+          let badge = '';
+          if (res && res.rank1.name === b.name) {
+            badge = '<span class="text-[10px] bg-amber-950 text-amber-300 border border-amber-600/50 px-1.5 py-0.5 rounded font-bold mr-1.5">🥇 第一名封存</span>';
+          } else if (res && res.rank2.name === b.name) {
+            badge = '<span class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-600/50 px-1.5 py-0.5 rounded font-bold mr-1.5">🥈 第二名公開</span>';
+          } else {
+            badge = '<span class="text-[10px] bg-neutral-900 text-neutral-400 border border-neutral-800 px-1.5 py-0.5 rounded mr-1.5">未入選</span>';
+          }
+
+          const truthColor = b.isReal ? 'text-emerald-400 font-black' : 'text-rose-400 font-black';
+          const truthLabel = b.isReal ? '【真品】' : '【贗品】';
+          const voteInfo = b.votes !== undefined ? `(${b.votes} 票)` : '';
+
+          beastsListHtml += `
+            <div class="flex justify-between items-center py-1.5 px-2.5 rounded bg-neutral-900/70 border border-neutral-800/80 text-xs">
+              <div class="flex items-center">
+                ${badge}
+                <span class="font-bold text-neutral-100 text-sm">${b.name}</span>
+                <span class="text-[11px] text-neutral-400 ml-1.5">${voteInfo}</span>
+              </div>
+              <div class="${truthColor}">${truthLabel}</div>
+            </div>
+          `;
+        });
+
+        box.innerHTML = `
+          <div class="font-bold text-amber-400 text-xs flex justify-between items-center border-b border-neutral-800 pb-1">
+            <span>第 ${r.roundNum} 回合全部獸首真偽揭曉：</span>
+            <span class="text-[10px] text-neutral-400 font-normal">共4件（2真2假）</span>
+          </div>
+          <div class="space-y-1">
+            ${beastsListHtml}
+          </div>
+        `;
+        summaryContainer.appendChild(box);
+      });
+
+      // 3. 鑑人環節投票明細：
+      // 分區：五個好人角色一組、老朝奉跟藥不然一組、鄭國渠自己一組！
+      // 每一行具有顏色色底區分與角色顏色
+      const personSummary = document.getElementById('personVoteSummary');
+      
+      const goodGroup = G.players.filter(p => goodRoleNames.includes(p.role));
+      const evilLeaders = G.players.filter(p => ['老朝奉', '藥不然'].includes(p.role));
+      const zhengList = G.players.filter(p => p.role === '鄭國渠');
+
+      function renderVoteRow(voter) {
+        const targetId = G.personVotes[voter.id];
+        const targetPlayer = G.players.find(p => p.id === targetId);
+        const vc = COLOR_PALETTE.find(x => x.id === voter.colorId) || COLOR_PALETTE[0];
+        const tc = targetPlayer ? (COLOR_PALETTE.find(x => x.id === targetPlayer.colorId) || COLOR_PALETTE[0]) : null;
+        const isGoodVoter = goodRoleNames.includes(voter.role);
+        const isGoodTarget = targetPlayer ? goodRoleNames.includes(targetPlayer.role) : false;
+        const isZheng = voter.role === '鄭國渠';
+
+        return `
+          <div class="flex justify-between items-center text-xs py-1 px-2 rounded bg-neutral-900/80 border border-neutral-800">
+            <div class="flex items-center space-x-1.5">
+              <span class="${vc.bgClass} px-1.5 py-0.5 rounded text-[10px] font-black">${vc.name}色</span>
+              <b class="${isGoodVoter ? 'text-blue-400' : 'text-red-500'} font-black">(${voter.role})</b>
+              ${isZheng ? '<span class="text-rose-400 font-bold text-[10px]">[無效票]</span>' : ''}
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <span class="text-neutral-500 text-[10px]">➔ 投給</span>
+              ${tc ? `
+                <span class="${tc.bgClass} px-1.5 py-0.5 rounded text-[10px] font-black">${tc.name}色</span>
+                <b class="${isGoodTarget ? 'text-blue-400' : 'text-red-500'} font-black">(${targetPlayer.role})</b>
+              ` : '<span class="text-neutral-500">未投票</span>'}
+            </div>
+          </div>
+        `;
+      }
+
+      personSummary.innerHTML = `
+        <div class="space-y-3">
+          <!-- 分區 1：好人陣營投票 -->
+          <div>
+            <div class="text-[11px] font-bold text-blue-400 mb-1 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-blue-500 inline-block mr-1.5"></span>
+              許願陣營（許願 / 方震 / 姬雲浮 / 黃煙煙 / 木戶加奈）：
+            </div>
+            <div class="space-y-1">
+              ${goodGroup.map(p => renderVoteRow(p)).join('')}
+            </div>
+          </div>
+
+          <!-- 分區 2：老朝奉與藥不然投票 -->
+          <div>
+            <div class="text-[11px] font-bold text-red-400 mb-1 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-red-500 inline-block mr-1.5"></span>
+              老朝奉陣營（老朝奉 / 藥不然）：
+            </div>
+            <div class="space-y-1">
+              ${evilLeaders.map(p => renderVoteRow(p)).join('')}
+            </div>
+          </div>
+
+          <!-- 分區 3：鄭國渠投票 -->
+          <div>
+            <div class="text-[11px] font-bold text-neutral-400 mb-1 flex items-center">
+              <span class="w-2 h-2 rounded-full bg-neutral-500 inline-block mr-1.5"></span>
+              鄭國渠（心腹・投票無效）：
+            </div>
+            <div class="space-y-1">
+              ${zhengList.map(p => renderVoteRow(p)).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+
+
+
+      // 5. 終局最下方：每個玩家的每個操作紀錄明細
+      const actionLogsContainer = document.getElementById('allPlayerActionLogs');
+      actionLogsContainer.innerHTML = '';
+
+      G.players.forEach(p => {
+        const c = COLOR_PALETTE.find(x => x.id === p.colorId) || COLOR_PALETTE[0];
+        const logs = G.actionLogs[p.id] || { r1:{}, r2:{}, r3:{}, vote:'' };
+
+        const block = document.createElement('div');
+        block.className = 'p-3 bg-neutral-900/90 border border-neutral-800 rounded-xl space-y-1.5';
+
+        let roundsHtml = '';
+        [1, 2, 3].forEach(rNum => {
+          const rData = logs[`r${rNum}`] || { inspect:[], ability:'無操作', next:'未指定' };
+          const inspectStr = rData.inspect.length > 0 ? rData.inspect.join('；') : '未查驗';
+          roundsHtml += `
+            <div class="text-[11px] bg-neutral-950 p-2 rounded border border-neutral-800/60">
+              <span class="font-bold text-amber-400">第 ${rNum} 回合：</span>
+              <div>• 查驗：${inspectStr}</div>
+              <div>• 能力：${rData.ability || '無操作'}</div>
+              <div>• 順位：${rData.next || '無紀錄'}</div>
+            </div>
+          `;
+        });
+
+        block.innerHTML = `
+          <div class="flex items-center justify-between border-b border-neutral-700 pb-1.5 mb-1.5">
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full ${c.dotClass} border"></span>
+              <span class="font-bold text-neutral-100">${c.name}色 ${p.name}</span>
+            </div>
+            <span class="text-[11px] font-bold ${goodRoleNames.includes(p.role) ? 'text-blue-400' : 'text-red-500'}">【${p.role}】</span>
+          </div>
+          <div class="space-y-1.5">
+            ${roundsHtml}
+            <div class="text-[11px] text-amber-300 pt-1">• 鑑人投票：${logs.vote || '未投票'}</div>
+          </div>
+        `;
+        actionLogsContainer.appendChild(block);
+      });
+    }
+
+    /* ============================================================
+       音效生成器 (Web Audio API - 5 秒音效)
+       ============================================================ */
+    function playAudioEffect(isVictory) {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+
+        const now = audioCtx.currentTime;
+        const duration = 5.0;
+
+        if (isVictory) {
+          const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.18);
+            
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.12, now + idx * 0.18 + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.18);
+            osc.stop(now + duration);
+          });
+        } else {
+          const lowOsc = audioCtx.createOscillator();
+          const lowGain = audioCtx.createGain();
+          lowOsc.type = 'sawtooth';
+          lowOsc.frequency.setValueAtTime(65.41, now);
+          lowOsc.frequency.exponentialRampToValueAtTime(45.0, now + duration);
+
+          lowGain.gain.setValueAtTime(0, now);
+          lowGain.gain.linearRampToValueAtTime(0.2, now + 0.3);
+          lowGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+          lowOsc.connect(lowGain);
+          lowGain.connect(audioCtx.destination);
+          lowOsc.start(now);
+          lowOsc.stop(now + duration);
+
+          const eerieOsc = audioCtx.createOscillator();
+          const eerieGain = audioCtx.createGain();
+          eerieOsc.type = 'sine';
+          eerieOsc.frequency.setValueAtTime(185.00, now);
+          eerieGain.gain.setValueAtTime(0, now);
+          eerieGain.gain.linearRampToValueAtTime(0.1, now + 0.5);
+          eerieGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+          eerieOsc.connect(eerieGain);
+          eerieGain.connect(audioCtx.destination);
+          eerieOsc.start(now);
+          eerieOsc.stop(now + duration);
+        }
+      } catch (e) {
+        console.error('Web Audio API error', e);
+      }
+    }
+
+    /* ============================================================
+       全域畫面路由器 (View Router)
+       ============================================================ */
+    function renderAll() {
+      document.getElementById('secSetup').classList.toggle('hidden', G.step !== 'setup');
+      document.getElementById('secRoleReveal').classList.toggle('hidden', G.step !== 'roles');
+      document.getElementById('secHandover').classList.toggle('hidden', G.step !== 'handover');
+      document.getElementById('secPlayerTurn').classList.toggle('hidden', G.step !== 'turn');
+      document.getElementById('secVoting').classList.toggle('hidden', G.step !== 'voting');
+      document.getElementById('secPersonHandover').classList.toggle('hidden', G.step !== 'person_handover');
+      document.getElementById('secPersonVoting').classList.toggle('hidden', G.step !== 'person_voting');
+      document.getElementById('secGameOver').classList.toggle('hidden', G.step !== 'gameover');
+
+      if (G.step === 'setup') {
+        renderSetupView();
+      } else if (G.step === 'roles') {
+        renderRoleRevealView();
+      } else if (G.step === 'handover') {
+        renderHandoverView();
+      } else if (G.step === 'turn') {
+        renderTurnView();
+      } else if (G.step === 'voting') {
+        renderVotingView();
+      } else if (G.step === 'person_handover') {
+        renderPersonHandoverView();
+      } else if (G.step === 'person_voting') {
+        renderPersonVotingView();
+      } else if (G.step === 'gameover') {
+        renderGameOverView();
+      }
+    }
+
+    /* ============================================================
+       語音功能 (Speech Synthesis)
+       ============================================================ */
+    function toggleVoice() {
+      voiceActive = !voiceActive;
+      document.getElementById('voiceBtn').innerText = voiceActive ? '🔊 語音: 開' : '🔈 語音: 關';
+    }
+
+    function speak(text) {
+      if (!voiceActive || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'zh-TW';
+      utter.rate = 0.95;
+      window.speechSynthesis.speak(utter);
+    }
+  </script>
+</body>
+</html>
