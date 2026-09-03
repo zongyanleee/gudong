@@ -436,7 +436,7 @@
     /* ============================================================
        全域常數與調色盤 (Colors & Constants)
        ============================================================ */
-    const STORAGE_KEY = 'gudong_boardgame_rules_v25';
+    const STORAGE_KEY = 'gudong_boardgame_rules_v26';
     const MASTER_PROFILES_KEY = 'gudong_master_profiles_v2';
     const NICKNAME_STORAGE_KEY = 'gudong_saved_nicknames_v1';
 
@@ -914,6 +914,53 @@
       confirmBtn.className = "w-full py-3 bg-neutral-900 text-neutral-600 font-bold rounded-xl border border-neutral-800 transition cursor-not-allowed opacity-50";
     }
 
+        const STARTER_HISTORY_KEY = 'gudong_starter_history_v1';
+    const SEVEN_HOURS_MS = 7 * 60 * 60 * 1000; // 7小時毫秒數
+
+    function getValidStarterHistory() {
+      try {
+        const raw = localStorage.getItem(STARTER_HISTORY_KEY);
+        if (raw) {
+          const list = JSON.parse(raw);
+          if (Array.isArray(list)) {
+            const now = Date.now();
+            return list.filter(item => item && item.colorId && (now - item.timestamp < SEVEN_HOURS_MS));
+          }
+        }
+      } catch (e) {}
+      return [];
+    }
+
+    function recordStarterHistory(colorId) {
+      try {
+        const history = getValidStarterHistory();
+        history.push({ colorId: colorId, timestamp: Date.now() });
+        localStorage.setItem(STARTER_HISTORY_KEY, JSON.stringify(history));
+      } catch (e) {}
+    }
+
+    // 每一局第一回合隨機首家，但在 7 小時內不會有相同顏色的隨機首家，確保每個玩家都能輪到首家！
+    function pickFairRandomStarter() {
+      const now = Date.now();
+      let history = getValidStarterHistory();
+      const recentColorIds = new Set(history.map(item => item.colorId));
+
+      // 篩選 7 小時內尚未擔任過首家的玩家
+      let candidates = G.players.filter(p => !recentColorIds.has(p.colorId));
+
+      // 若所有玩家在 7 小時內皆已輪過一遍，則重置歷史展開新一輪循環
+      if (candidates.length === 0) {
+        history = [];
+        try { localStorage.removeItem(STARTER_HISTORY_KEY); } catch (e) {}
+        candidates = [...G.players];
+      }
+
+      // 從符合條件的候選名單中隨機抽取一位
+      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+      recordStarterHistory(chosen.colorId);
+      return chosen;
+    }
+
     function nextRoleReveal() {
       if (!G.roleCardUnmasked) return; // 防呆
 
@@ -931,8 +978,8 @@
         const nextC = COLOR_PALETTE.find(x => x.id === nextP.colorId) || COLOR_PALETTE[0];
         speak(`${getSpokenColorName(nextC.name)}確認`);
       } else {
-        const randStarterIdx = Math.floor(Math.random() * G.players.length);
-        const starter = G.players[randStarterIdx];
+        // 7 小時內不重複顏色的公平隨機首家
+        const starter = pickFairRandomStarter();
         G.starterPlayerId = starter.id;
         G.activePlayerId = starter.id;
         G.inspectedPlayerIds = [];
