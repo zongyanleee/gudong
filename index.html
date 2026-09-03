@@ -80,12 +80,12 @@
     <section id="secSetup" class="space-y-4">
       <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-xl">
         <h2 class="text-lg font-black text-amber-400 mb-1 flex items-center">
-          <span class="mr-2">壹.</span> 遊戲人數與玩家設定
+          遊戲人數與玩家設定
         </h2>
         <p class="text-xs text-neutral-400 mb-4">固定進行三回合，每回合由12獸首中抽出4件（必為2真2假）。</p>
 
         <!-- 人數選擇：僅 7 人與 8 人局 -->
-        <label class="block text-sm font-bold text-neutral-200 mb-2">選擇玩家人數（無6人局）</label>
+        <label class="block text-sm font-bold text-neutral-200 mb-2">選擇玩家人數</label>
         <div class="grid grid-cols-2 gap-3 mb-5">
           <button type="button" onclick="setPlayerCount(7)" id="btnCount7" class="py-3 rounded-xl border text-base font-black transition flex flex-col items-center justify-center">
             <span>7 人局</span>
@@ -99,7 +99,7 @@
 
                 <!-- 玩家名稱與專屬顏色 (暱稱與顏色自動保存記憶) -->
         <div class="mb-2 flex justify-between items-center">
-          <label class="text-sm font-bold text-neutral-200">玩家名單與專屬顏色（黑紅橘黃綠藍紫白）</label>
+          <label class="text-sm font-bold text-neutral-200">玩家名單與專屬顏色</label>
           <span class="text-[10px] text-amber-500 font-medium">✨ 可拖曳 ☰ 或點 ▲▼ 調整順序</span>
         </div>
 
@@ -473,6 +473,7 @@
       rounds: [],               // [ { roundNum, beasts: [ { name, isReal, votes } ], voteResults: null } ]
       currentRoundIdx: 0,       // 0, 1, 2
       starterPlayerId: null,    // 首家 ID
+      forcedStarterPlayerId: null, // 強制首家玩家 ID
       lastPlayerIdOfRound: null,// 每輪尾家 ID
       activePlayerId: null,     // 當前操作玩家 ID
       inspectedPlayerIds: [],   // 本輪已查驗玩家 ID
@@ -651,6 +652,19 @@
       renderSetupView();
     }
 
+        // 強制首家按鈕切換
+    function toggleForceStarter(playerIdx) {
+      const targetP = G.players[playerIdx];
+      if (!targetP) return;
+      if (G.forcedStarterPlayerId === targetP.id) {
+        G.forcedStarterPlayerId = null; // 取消強制首家
+      } else {
+        G.forcedStarterPlayerId = targetP.id; // 指定為第一回合強制首家
+      }
+      saveState();
+      renderSetupView();
+    }
+
     function setPlayerName(playerIdx, val) {
       const newName = val.trim() || `玩家 ${playerIdx + 1}`;
       G.players[playerIdx].name = newName;
@@ -720,7 +734,7 @@
         });
 
         row.innerHTML = `
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center space-x-1.5 sm:space-x-2">
             <!-- 拖曳手柄與順序號碼 -->
             <div class="flex items-center space-x-1 text-neutral-400 flex-shrink-0">
               <span class="drag-handle cursor-grab active:cursor-grabbing px-1 py-1.5 hover:text-amber-400 touch-none select-none text-base font-mono" title="長按拖曳排序">☰</span>
@@ -729,12 +743,18 @@
 
             <!-- 顏色圓點與輸入框 -->
             <span class="w-4 h-4 rounded-full ${curColor.dotClass} border flex-shrink-0"></span>
-            <input type="text" value="${p.name}" oninput="setPlayerName(${idx}, this.value)" class="w-28 sm:w-32 text-sm font-medium bg-neutral-900 border border-neutral-700 rounded-lg px-2.5 py-1.5 text-neutral-100 outline-none focus:border-amber-500">
-            <span class="text-sm text-neutral-300 font-bold px-2 py-0.5 rounded border border-neutral-700 flex-shrink-0">${curColor.name}色</span>
-            ${isDup ? '<span class="text-[10px] text-rose-400 font-bold bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800 flex-shrink-0">重複</span>' : ''}
+            <input type="text" value="${p.name}" oninput="setPlayerName(${idx}, this.value)" class="w-24 sm:w-28 text-sm font-medium bg-neutral-900 border border-neutral-700 rounded-lg px-2 py-1.5 text-neutral-100 outline-none focus:border-amber-500 flex-shrink-0">
+            <span class="text-xs text-neutral-300 font-bold px-1.5 py-1 rounded border border-neutral-700 flex-shrink-0">${curColor.name}色</span>
+            
+            <!-- 強制首家按鈕 -->
+            <button type="button" onclick="toggleForceStarter(${idx})" class="text-xs px-2 py-1 rounded-lg border font-bold flex-shrink-0 transition ${G.forcedStarterPlayerId === p.id ? 'bg-amber-600 text-neutral-950 border-amber-400 font-black shadow-sm' : 'bg-neutral-900 text-neutral-400 border-neutral-700 hover:text-neutral-200'}">
+              ${G.forcedStarterPlayerId === p.id ? '★ 強制首家' : '強制首家'}
+            </button>
+            
+            ${isDup ? '<span class="text-[10px] text-rose-400 font-bold bg-rose-950 px-1 py-0.5 rounded border border-rose-800 flex-shrink-0">重複</span>' : ''}
 
-            <!-- 上下順序微調按鈕 (手機上一鍵微調極方便) -->
-            <div class="flex flex-col space-y-0.5 flex-shrink-0">
+            <!-- 上下順序微調按鈕 -->
+            <div class="flex flex-col space-y-0.5 flex-shrink-0 ml-auto">
               <button type="button" onclick="movePlayerOrder(${idx}, ${idx - 1})" ${idx === 0 ? 'disabled' : ''} class="text-[9px] w-5 h-3.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-amber-400 disabled:opacity-20 disabled:cursor-not-allowed">▲</button>
               <button type="button" onclick="movePlayerOrder(${idx}, ${idx + 1})" ${idx === G.players.length - 1 ? 'disabled' : ''} class="text-[9px] w-5 h-3.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-amber-400 disabled:opacity-20 disabled:cursor-not-allowed">▼</button>
             </div>
@@ -986,8 +1006,16 @@
         const nextC = COLOR_PALETTE.find(x => x.id === nextP.colorId) || COLOR_PALETTE[0];
         speak(`${getSpokenColorName(nextC.name)}確認`);
       } else {
-        // 7 小時內不重複顏色的公平隨機首家
-        const starter = pickFairRandomStarter();
+        // 首家選擇：若有勾選強制首家則指派該玩家，否則執行 7 小時不重複隨機首家
+        let starter = null;
+        if (G.forcedStarterPlayerId) {
+          starter = G.players.find(p => p.id === G.forcedStarterPlayerId);
+        }
+        if (!starter) {
+          starter = pickFairRandomStarter();
+        } else {
+          recordStarterHistory(starter.colorId);
+        }
         G.starterPlayerId = starter.id;
         G.activePlayerId = starter.id;
         G.inspectedPlayerIds = [];
