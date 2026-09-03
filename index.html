@@ -14,6 +14,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;900&display=swap" rel="stylesheet">
   <style>
+    html {
+      scroll-behavior: smooth;
+    }
     body {
       font-family: 'Noto Serif TC', serif, system-ui;
       touch-action: manipulation;
@@ -159,7 +162,7 @@
     </section>
 
     <!-- ================= 階段 4：玩家個人回合 (TURN a, b, c) ================= -->
-    <section id="secPlayerTurn" class="hidden space-y-4">
+    <section id="secPlayerTurn" class="hidden space-y-4 pb-[55vh]">
       <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 shadow-xl">
         
         <div class="flex justify-between items-center border-b border-neutral-800 pb-3 mb-3">
@@ -352,7 +355,7 @@
     </section>
 
     <!-- ================= 階段 7：鑑人投票操作 (PERSON VOTING) ================= -->
-    <section id="secPersonVoting" class="hidden space-y-4">
+    <section id="secPersonVoting" class="hidden space-y-4 pb-[55vh]">
       <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-xl">
         
         <!-- 大字樣提示: 顏色字有色底 -->
@@ -422,7 +425,7 @@
     /* ============================================================
        全域常數與調色盤 (Colors & Constants)
        ============================================================ */
-    const STORAGE_KEY = 'gudong_boardgame_rules_v16';
+    const STORAGE_KEY = 'gudong_boardgame_rules_v17';
     const MASTER_PROFILES_KEY = 'gudong_master_profiles_v2';
     const NICKNAME_STORAGE_KEY = 'gudong_saved_nicknames_v1';
 
@@ -862,11 +865,22 @@
       G.abilityLockedInCurrentTurn = false;
       saveState();
       renderAll();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     /* ============================================================
        階段 4：玩家個人回合流程 (TURN a, b, c)
        ============================================================ */
+        // 頁面平滑自動滾動（操作後自動往上滑，下方預留半個頁面空白）
+    function smoothScrollTo(elementId, blockPosition = 'center') {
+      setTimeout(() => {
+        const el = document.getElementById(elementId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: blockPosition });
+        }
+      }, 100);
+    }
+
     function renderTurnView() {
       const curP = G.players.find(p => p.id === G.activePlayerId);
       if (!curP) return;
@@ -1044,12 +1058,14 @@
       document.getElementById('appraiseResultBox').classList.remove('hidden');
       saveState();
       renderStepABeasts(curP);
+      smoothScrollTo('appraiseResultBox', 'center');
     }
 
     function goToStepB() {
       G.turnSubStep = 'b';
       saveState();
       renderTurnView();
+      smoothScrollTo('stepB', 'start');
     }
 
     // 渲染步驟 b：角色能力
@@ -1398,6 +1414,7 @@
       G.lastPlayerIdOfRound = G.activePlayerId;
       saveState();
       renderTurnView();
+      smoothScrollTo('stepC', 'start');
     }
 
     // 流程 c: 選擇下一家玩家
@@ -1449,6 +1466,7 @@
           confirmWrapper.classList.remove('hidden');
           confirmBtn.className = `px-8 py-3.5 rounded-xl font-black text-sm shadow-xl transition transform hover:scale-[1.02] border ${sc.bgClass}`;
           confirmBtn.innerHTML = `確認選擇此玩家（${sc.name}色 ${selectedPlayer.name}） ➔`;
+          smoothScrollTo('stepCConfirmWrapper', 'center');
         } else {
           confirmWrapper.classList.add('hidden');
         }
@@ -1719,6 +1737,7 @@
         confirmWrapper.classList.remove('hidden');
         confirmBtn.className = `w-full py-3.5 rounded-xl font-black text-sm shadow-xl transition border ${chosenColor.bgClass}`;
         confirmBtn.innerHTML = `確認投給：${chosenColor.name}色 ${chosenPlayer.name} ➔`;
+        smoothScrollTo('pvConfirmWrapper', 'center');
       } else {
         confirmWrapper.classList.add('hidden');
       }
