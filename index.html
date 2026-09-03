@@ -25,6 +25,17 @@
     }
     .mask-blur { filter: blur(14px); user-select: none; }
     .mask-blur.unmasked { filter: blur(0); }
+    /* 拖曳排序樣式 */
+    .player-setup-row.dragging {
+      opacity: 0.4;
+      border-color: #f59e0b !important;
+    }
+    .player-setup-row.drag-over {
+      border-color: #f59e0b !important;
+      background-color: rgba(245, 158, 11, 0.1) !important;
+      transform: scale(1.01);
+    }
+
     /* 防止手機長按選取文字 */
     button, .cursor-pointer {
       -webkit-touch-callout: none;
@@ -89,7 +100,7 @@
                 <!-- 玩家名稱與專屬顏色 (暱稱與顏色自動保存記憶) -->
         <div class="mb-2 flex justify-between items-center">
           <label class="text-sm font-bold text-neutral-200">玩家名單與專屬顏色（黑紅橘黃綠藍紫白）</label>
-          <span class="text-[10px] text-amber-500 font-medium">✨ 暱稱與顏色已自動記憶</span>
+          <span class="text-[10px] text-amber-500 font-medium">✨ 可拖曳 ☰ 或點 ▲▼ 調整順序</span>
         </div>
 
         <!-- 顏色重複警告提示 -->
@@ -425,7 +436,7 @@
     /* ============================================================
        全域常數與調色盤 (Colors & Constants)
        ============================================================ */
-    const STORAGE_KEY = 'gudong_boardgame_rules_v23';
+    const STORAGE_KEY = 'gudong_boardgame_rules_v24';
     const MASTER_PROFILES_KEY = 'gudong_master_profiles_v2';
     const NICKNAME_STORAGE_KEY = 'gudong_saved_nicknames_v1';
 
@@ -615,6 +626,27 @@
       renderSetupView();
     }
 
+    
+    // 玩家名單拖曳與順序調整邏輯
+    let draggedRowIndex = null;
+    let touchSrcIndex = null;
+
+    function movePlayerOrder(fromIdx, toIdx) {
+      if (fromIdx === toIdx || fromIdx < 0 || toIdx < 0 || fromIdx >= G.players.length || toIdx >= G.players.length) return;
+      
+      const movedPlayer = G.players.splice(fromIdx, 1)[0];
+      G.players.splice(toIdx, 0, movedPlayer);
+
+      // 同步更新 masterProfiles
+      const master = getMasterProfiles();
+      const movedMaster = master.splice(fromIdx, 1)[0];
+      master.splice(toIdx, 0, movedMaster);
+      saveMasterProfiles(master);
+
+      saveState();
+      renderSetupView();
+    }
+
     function setPlayerName(playerIdx, val) {
       const newName = val.trim() || `玩家 ${playerIdx + 1}`;
       G.players[playerIdx].name = newName;
@@ -669,8 +701,10 @@
         const curColor = COLOR_PALETTE.find(c => c.id === p.colorId) || COLOR_PALETTE[0];
         const isDup = colorCounts[p.colorId] > 1;
         const row = document.createElement('div');
-        row.className = `p-2.5 bg-neutral-950 border rounded-xl space-y-2 transition ${isDup ? 'border-rose-600 ring-1 ring-rose-500/60 bg-rose-950/20' : 'border-neutral-800'}`;
-        
+        row.className = `player-setup-row p-2.5 bg-neutral-950 border rounded-xl space-y-2 transition ${isDup ? 'border-rose-600 ring-1 ring-rose-500/60 bg-rose-950/20' : 'border-neutral-800'}`;
+        row.dataset.index = idx;
+        row.draggable = true;
+
         let colorPills = '';
         COLOR_PALETTE.forEach(c => {
           const isSelected = c.id === p.colorId;
@@ -683,16 +717,95 @@
 
         row.innerHTML = `
           <div class="flex items-center space-x-2">
-            <span class="w-4 h-4 rounded-full ${curColor.dotClass} border"></span>
-            <input type="text" value="${p.name}" oninput="setPlayerName(${idx}, this.value)" class="flex-1 text-sm font-medium bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-neutral-100 outline-none focus:border-amber-500">
-            <span class="text-sm text-neutral-300 font-bold px-2.5 py-1 rounded border border-neutral-700">${curColor.name}色</span>
-            ${isDup ? '<span class="text-[10px] text-rose-400 font-bold bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800">顏色重複</span>' : ''}
+            <!-- 拖曳手柄與順序號碼 -->
+            <div class="flex items-center space-x-1 text-neutral-400 flex-shrink-0">
+              <span class="drag-handle cursor-grab active:cursor-grabbing px-1 py-1.5 hover:text-amber-400 touch-none select-none text-base font-mono" title="長按拖曳排序">☰</span>
+              <span class="text-xs font-bold text-neutral-400 w-3.5 text-center">${idx + 1}</span>
+            </div>
+
+            <!-- 顏色圓點與輸入框 -->
+            <span class="w-4 h-4 rounded-full ${curColor.dotClass} border flex-shrink-0"></span>
+            <input type="text" value="${p.name}" oninput="setPlayerName(${idx}, this.value)" class="flex-1 text-sm font-medium bg-neutral-900 border border-neutral-700 rounded-lg px-2.5 py-1.5 text-neutral-100 outline-none focus:border-amber-500">
+            <span class="text-sm text-neutral-300 font-bold px-2 py-0.5 rounded border border-neutral-700 flex-shrink-0">${curColor.name}色</span>
+            ${isDup ? '<span class="text-[10px] text-rose-400 font-bold bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800 flex-shrink-0">重複</span>' : ''}
+
+            <!-- 上下順序微調按鈕 (手機上一鍵微調極方便) -->
+            <div class="flex flex-col space-y-0.5 flex-shrink-0">
+              <button type="button" onclick="movePlayerOrder(${idx}, ${idx - 1})" ${idx === 0 ? 'disabled' : ''} class="text-[9px] w-5 h-3.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-amber-400 disabled:opacity-20 disabled:cursor-not-allowed">▲</button>
+              <button type="button" onclick="movePlayerOrder(${idx}, ${idx + 1})" ${idx === G.players.length - 1 ? 'disabled' : ''} class="text-[9px] w-5 h-3.5 rounded bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 flex items-center justify-center text-neutral-400 hover:text-amber-400 disabled:opacity-20 disabled:cursor-not-allowed">▼</button>
+            </div>
           </div>
-          <div class="flex items-center space-x-1.5 pt-1 overflow-x-auto">
+          <div class="flex items-center space-x-1.5 pt-0.5 overflow-x-auto pl-7">
             <span class="text-[10px] text-neutral-500 mr-1">選色:</span>
             ${colorPills}
           </div>
         `;
+
+        // 電腦端 HTML5 拖曳事件
+        row.addEventListener('dragstart', (e) => {
+          draggedRowIndex = idx;
+          row.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        row.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          row.classList.add('drag-over');
+        });
+
+        row.addEventListener('dragleave', () => {
+          row.classList.remove('drag-over');
+        });
+
+        row.addEventListener('drop', (e) => {
+          e.preventDefault();
+          row.classList.remove('drag-over');
+          if (draggedRowIndex !== null && draggedRowIndex !== idx) {
+            movePlayerOrder(draggedRowIndex, idx);
+          }
+        });
+
+        row.addEventListener('dragend', () => {
+          row.classList.remove('dragging');
+          document.querySelectorAll('.player-setup-row').forEach(el => el.classList.remove('drag-over'));
+        });
+
+        // 手機端 Touch 觸控拖曳事件（綁定在 ☰ 手柄上）
+        const handle = row.querySelector('.drag-handle');
+        if (handle) {
+          handle.addEventListener('touchstart', (e) => {
+            touchSrcIndex = idx;
+            row.classList.add('dragging');
+          }, { passive: true });
+
+          handle.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // 防止滾動頁面
+            const touch = e.touches[0];
+            const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+            const targetRow = elem ? elem.closest('.player-setup-row') : null;
+            document.querySelectorAll('.player-setup-row').forEach(el => el.classList.remove('drag-over'));
+            if (targetRow && targetRow !== row) {
+              targetRow.classList.add('drag-over');
+            }
+          }, { passive: false });
+
+          handle.addEventListener('touchend', (e) => {
+            row.classList.remove('dragging');
+            const touch = e.changedTouches[0];
+            const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+            const targetRow = elem ? elem.closest('.player-setup-row') : null;
+            document.querySelectorAll('.player-setup-row').forEach(el => el.classList.remove('drag-over'));
+            if (targetRow && targetRow.dataset.index !== undefined) {
+              const targetIdx = parseInt(targetRow.dataset.index);
+              if (touchSrcIndex !== null && touchSrcIndex !== targetIdx) {
+                movePlayerOrder(touchSrcIndex, targetIdx);
+              }
+            }
+            touchSrcIndex = null;
+          });
+        }
+
         container.appendChild(row);
       });
     }
