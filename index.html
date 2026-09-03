@@ -201,8 +201,8 @@
         </div>
 
         <!-- 陣營資訊：位置在查驗欄位(stepA)以及角色專屬能力欄位(stepB)中間，不顯示鄭國渠 -->
-        <div id="turnCampInfoBanner" class="hidden my-3 p-3.5 bg-neutral-950 border border-neutral-800 rounded-xl text-sm text-neutral-200 font-medium">
-          <span class="text-amber-400 font-bold">陣營資訊：</span>
+        <div id="turnCampInfoBanner" class="hidden my-3.5 p-4 bg-neutral-950 border border-neutral-700 rounded-2xl text-base text-neutral-100 font-bold shadow-lg">
+          <span class="text-amber-400 font-black text-base mr-1">陣營資訊：</span>
           <span id="turnCampInfoText" class="font-bold text-neutral-200"></span>
         </div>
 
@@ -425,7 +425,7 @@
     /* ============================================================
        全域常數與調色盤 (Colors & Constants)
        ============================================================ */
-    const STORAGE_KEY = 'gudong_boardgame_rules_v20';
+    const STORAGE_KEY = 'gudong_boardgame_rules_v21';
     const MASTER_PROFILES_KEY = 'gudong_master_profiles_v2';
     const NICKNAME_STORAGE_KEY = 'gudong_saved_nicknames_v1';
 
@@ -449,6 +449,9 @@
 
     // 主遊戲狀態模型
     let G = {
+      fangZhenClickCounts: {},
+      fangZhenDistinctBeasts: {},
+      fangZhenLockedMessage: null,
       step: 'setup',            // 'setup' | 'roles' | 'handover' | 'turn' | 'voting' | 'person_handover' | 'person_voting' | 'gameover'
       playerCount: 8,           // 7 (4好3壞無姬雲浮) 或 8 (5好3壞含姬雲浮)
       players: [],              // [{ id, name, colorId, role, isAmbushed, isPermanentlyAmbushed, confusedRound }]
@@ -857,6 +860,9 @@
       G.fangZhenSelectedTargetId = null;
       G.fangZhenRevealedCamp = null;
       G.abilityLockedInCurrentTurn = false;
+      G.fangZhenClickCounts = {};
+      G.fangZhenDistinctBeasts = {};
+      G.fangZhenLockedMessage = null;
       saveState();
       renderAll();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1005,26 +1011,54 @@
     // 查驗獸首計算 (嚴格遵守顯示格式)
     function appraiseBeast(b) {
       const curP = G.players.find(p => p.id === G.activePlayerId);
-
       const isUnderAmbush = curP.isAmbushed || curP.isPermanentlyAmbushed;
-      const maxInspectCount = (curP.role === '許願' && !isUnderAmbush) ? 2 : 1;
-      if (curP.role !== '方震' && G.inspectedBeastsInTurn.length >= maxInspectCount) return;
 
-      // 許願強制選擇兩個不同的獸首，不可同一個連點兩下
-      const alreadyInspected = G.inspectedBeastsInTurn.some(item => item.beastName === b.name);
-      if (alreadyInspected) return;
+      // 查驗數量上限與鎖定檢驗
+      if (curP.role === '許願') {
+        const maxInspectCount = isUnderAmbush ? 1 : 2;
+        if (G.inspectedBeastsInTurn.length >= maxInspectCount) return;
+        // 許願強制選擇兩個不同的獸首，不可同一個連點兩下
+        const alreadyInspected = G.inspectedBeastsInTurn.some(item => item.beastName === b.name);
+        if (alreadyInspected) return;
+      } else if (curP.role === '方震') {
+        if (isUnderAmbush) {
+          // 方震被偷襲時，查驗頁面也變成只能鑑一種獸首而已
+          if (G.inspectedBeastsInTurn.length >= 1) return;
+        } else {
+          // 正常方震若已觸發彩蛋鎖定，不可再按
+          if (G.fangZhenLockedMessage) return;
+        }
+      } else {
+        if (G.inspectedBeastsInTurn.length >= 1) return;
+      }
 
       let displayText = '';
 
       // 檢查 1：是否遭藥不然偷襲 (不帶【獸首】為 前綴)
-// isUnderAmbush already declared above
       if (isUnderAmbush) {
         const ambushTexts = ['你眼前一片黑', '你被幹了', '你被偷襲了', '獸首被偷襲'];
         displayText = ambushTexts[Math.floor(Math.random() * ambushTexts.length)];
       }
-      // 檢查 2：方震 -> 【獸首】    看不懂???
+      // 檢查 2：正常方震彩蛋機制
       else if (curP.role === '方震') {
-        displayText = `【${b.name}】    看不懂???`;
+        if (!G.fangZhenClickCounts) G.fangZhenClickCounts = {};
+        if (!G.fangZhenDistinctBeasts) G.fangZhenDistinctBeasts = {};
+        G.fangZhenClickCounts[b.name] = (G.fangZhenClickCounts[b.name] || 0) + 1;
+        G.fangZhenDistinctBeasts[b.name] = true;
+
+        // 當同一種獸首按到第三遍時：到底在看三小?! 並鎖定
+        if (G.fangZhenClickCounts[b.name] >= 3) {
+          G.fangZhenLockedMessage = '到底在看三小?!';
+          displayText = '到底在看三小?!';
+        }
+        // 當把四種獸首都按過至少一遍時：你是不是忘了你是方震? 並鎖定
+        else if (Object.keys(G.fangZhenDistinctBeasts).length >= 4) {
+          G.fangZhenLockedMessage = '你是不是忘了你是方震?';
+          displayText = '你是不是忘了你是方震?';
+        }
+        else {
+          displayText = `【${b.name}】    看不懂???`;
+        }
       }
       // 檢查 3：鄭國渠封鎖 -> 【獸首】    無法辨別真偽！
       else if (G.blockedBeastThisRound === b.name) {
@@ -1064,14 +1098,22 @@
       document.getElementById('appraiseResultBox').classList.remove('hidden');
       saveState();
       renderStepABeasts(curP);
-      smoothScrollTo('appraiseResultBox', 'center');
+      // 在按下下一步之前，畫面不會往下滑動！
     }
 
     function goToStepB() {
       G.turnSubStep = 'b';
       saveState();
       renderTurnView();
-      smoothScrollTo('stepB', 'start', 68);
+      
+      const curP = G.players.find(p => p.id === G.activePlayerId);
+      const isEvilInformed = ['老朝奉', '藥不然'].includes(curP.role);
+      if (isEvilInformed) {
+        // 有陣營資訊的角色，往下滑時不會把陣營資訊滑掉，剛好停在陣營資訊上方！
+        smoothScrollTo('turnCampInfoBanner', 'start', 68);
+      } else {
+        smoothScrollTo('stepB', 'start', 68);
+      }
     }
 
     // 渲染步驟 b：角色能力
@@ -1545,6 +1587,8 @@
       saveState();
       renderAll();
       speak("前往鑑寶");
+      // 鑑寶投票頁面出現時強制將頁面滑到最上方
+      window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
     function renderVotingView() {
@@ -1801,8 +1845,11 @@
         }
       });
       totalScore += realSavedCount;
-      // 說明欄：鑒寶環節共得到X分 (分數顯示藍色)
-      scoreDetails.push(`鑒寶環節共得到<span class="text-blue-400 font-bold">${realSavedCount}分</span>`);
+      scoreDetails.push(`
+        <div class="p-2.5 rounded-xl bg-neutral-900/80 border border-neutral-800/80">
+          <div class="font-bold text-neutral-200 text-sm">• 鑒寶環節共得到 <span class="text-blue-400 font-black text-base">${realSavedCount}分</span></div>
+        </div>
+      `);
 
       const goodRoleNames = ['許願', '方震', '姬雲浮', '黃煙煙', '木戶加奈'];
       const goodPlayers = G.players.filter(p => goodRoleNames.includes(p.role));
@@ -1811,65 +1858,117 @@
       const fangPlayer = G.players.find(p => p.role === '方震');
       const xuPlayer = G.players.find(p => p.role === '許願');
 
-      // 2. 好人陣營投老朝奉 (1分顯示藍色，0分顯示紅色)
+      // 2. 好人陣營投老朝奉 (強制換行與對齊)
       if (laoPlayer) {
         const goodVotesForLao = goodPlayers.filter(p => G.personVotes[p.id] === laoPlayer.id).length;
         const majorityThreshold = goodPlayers.length / 2;
         if (goodVotesForLao > majorityThreshold) {
           totalScore += 1;
-          scoreDetails.push(`老朝奉被找到 (${goodVotesForLao}/${goodPlayers.length} 票)，許願方陣營加<span class="text-blue-400 font-bold">1分</span>`);
+          scoreDetails.push(`
+            <div class="p-2.5 rounded-xl bg-neutral-900/80 border border-neutral-800/80">
+              <div class="font-bold text-neutral-200 text-sm">• 老朝奉被找到 (${goodVotesForLao}/${goodPlayers.length} 票)</div>
+              <div class="text-xs text-neutral-400 mt-1 pl-3.5">
+                許願方陣營加<span class="text-blue-400 font-black text-sm">1分</span>
+              </div>
+            </div>
+          `);
         } else {
-          scoreDetails.push(`老朝奉沒有被找到 (${goodVotesForLao}/${goodPlayers.length} 票)，許願方陣營加<span class="text-red-500 font-bold">0分</span>`);
+          scoreDetails.push(`
+            <div class="p-2.5 rounded-xl bg-neutral-900/80 border border-neutral-800/80">
+              <div class="font-bold text-neutral-200 text-sm">• 老朝奉沒有被找到 (${goodVotesForLao}/${goodPlayers.length} 票)</div>
+              <div class="text-xs text-neutral-400 mt-1 pl-3.5">
+                許願方陣營加<span class="text-red-500 font-bold text-sm">0分</span>
+              </div>
+            </div>
+          `);
         }
       }
 
-      // 3. 【藥不然】沒能夠投到【方震】則加 1 分 (1分顯示藍色，0分顯示紅色)
+      // 3. 【藥不然】沒能夠投到【方震】則加 1 分 (強制換行與對齊)
       if (yaoPlayer && fangPlayer) {
         const yaoHitFang = (G.personVotes[yaoPlayer.id] === fangPlayer.id);
         if (!yaoHitFang) {
           totalScore += 1;
-          scoreDetails.push(`方震沒有被找到，許願方陣營加<span class="text-blue-400 font-bold">1分</span>`);
+          scoreDetails.push(`
+            <div class="p-2.5 rounded-xl bg-neutral-900/80 border border-neutral-800/80">
+              <div class="font-bold text-neutral-200 text-sm">• 方震沒有被找到</div>
+              <div class="text-xs text-neutral-400 mt-1 pl-3.5">
+                許願方陣營加<span class="text-blue-400 font-black text-sm">1分</span>
+              </div>
+            </div>
+          `);
         } else {
-          scoreDetails.push(`方震被找到，許願方陣營加<span class="text-red-500 font-bold">0分</span>`);
+          scoreDetails.push(`
+            <div class="p-2.5 rounded-xl bg-neutral-900/80 border border-neutral-800/80">
+              <div class="font-bold text-neutral-200 text-sm">• 方震被找到</div>
+              <div class="text-xs text-neutral-400 mt-1 pl-3.5">
+                許願方陣營加<span class="text-red-500 font-bold text-sm">0分</span>
+              </div>
+            </div>
+          `);
         }
       }
 
-      // 4. 【老朝奉】沒能夠投到【許願】則加 2 分 (2分顯示藍色，0分顯示紅色)
+      // 4. 【老朝奉】沒能夠投到【許願】則加 2 分 (強制換行與對齊)
       if (laoPlayer && xuPlayer) {
         const laoHitXu = (G.personVotes[laoPlayer.id] === xuPlayer.id);
         if (!laoHitXu) {
           totalScore += 2;
-          scoreDetails.push(`老朝奉沒有被找到，許願方陣營加<span class="text-blue-400 font-bold">2分</span>`);
+          scoreDetails.push(`
+            <div class="p-2.5 rounded-xl bg-neutral-900/80 border border-neutral-800/80">
+              <div class="font-bold text-neutral-200 text-sm">• 老朝奉沒有被找到</div>
+              <div class="text-xs text-neutral-400 mt-1 pl-3.5">
+                許願方陣營加<span class="text-blue-400 font-black text-sm">2分</span>
+              </div>
+            </div>
+          `);
         } else {
-          scoreDetails.push(`老朝奉投中許願，許願方陣營加<span class="text-red-500 font-bold">0分</span>`);
+          scoreDetails.push(`
+            <div class="p-2.5 rounded-xl bg-neutral-900/80 border border-neutral-800/80">
+              <div class="font-bold text-neutral-200 text-sm">• 老朝奉投中許願</div>
+              <div class="text-xs text-neutral-400 mt-1 pl-3.5">
+                許願方陣營加<span class="text-red-500 font-bold text-sm">0分</span>
+              </div>
+            </div>
+          `);
         }
       }
 
       // 勝負判定：>= 6 分 許願陣營獲勝； 0~5 分 老朝奉陣營獲勝
       const isXuWon = totalScore >= 6;
       const banner = document.getElementById('finalScoreBanner');
+
+      const winnerTitleHtml = isXuWon ? `
+        <div class="text-xs text-amber-400 font-bold mb-1 tracking-widest">【對局最終結果】</div>
+        <div class="text-3xl font-black text-amber-300 mb-2 leading-tight">
+          🎉 許願陣營<br><span class="text-4xl">獲勝！</span>
+        </div>
+        <div class="text-3xl font-black text-emerald-400 font-mono">最終總分：${totalScore} 分</div>
+        <div class="text-sm font-bold text-neutral-400 mt-0.5 mb-3">（≥ 6分）</div>
+      ` : `
+        <div class="text-xs text-rose-400 font-bold mb-1 tracking-widest">【對局最終結果】</div>
+        <div class="text-3xl font-black text-rose-400 mb-2 leading-tight">
+          😈 老朝奉陣營<br><span class="text-4xl">獲勝！</span>
+        </div>
+        <div class="text-3xl font-black text-rose-300 font-mono">最終總分：${totalScore} 分</div>
+        <div class="text-sm font-bold text-neutral-400 mt-0.5 mb-3">（0～5分）</div>
+      `;
+
+      banner.className = isXuWon 
+        ? 'p-5 rounded-2xl border border-amber-500 bg-amber-950/60 text-center mb-5 shadow-2xl'
+        : 'p-5 rounded-2xl border border-rose-700 bg-rose-950/60 text-center mb-5 shadow-2xl';
+
+      banner.innerHTML = `
+        ${winnerTitleHtml}
+        <div class="space-y-2 bg-neutral-950 p-3.5 rounded-xl border border-neutral-800 text-left">
+          ${scoreDetails.join('')}
+        </div>
+      `;
+
       if (isXuWon) {
-        banner.className = 'p-5 rounded-2xl border border-amber-500 bg-amber-950/60 text-center mb-5 shadow-2xl';
-        banner.innerHTML = `
-          <div class="text-xs text-amber-400 font-bold mb-1">【對局最終結果】</div>
-          <div class="text-4xl font-black text-amber-300 mb-2">🎉 許願陣營 獲勝！</div>
-          <div class="text-3xl font-black text-emerald-400 font-mono mb-3">最終總分：${totalScore} 分（≥ 6分）</div>
-          <div class="text-sm text-neutral-200 text-left space-y-2 bg-neutral-950 p-3.5 rounded-xl border border-neutral-800">
-            ${scoreDetails.map(d => `<div>• ${d}</div>`).join('')}
-          </div>
-        `;
         playAudioEffect(true);
         speak("許願陣營 獲勝");
       } else {
-        banner.className = 'p-5 rounded-2xl border border-rose-700 bg-rose-950/60 text-center mb-5 shadow-2xl';
-        banner.innerHTML = `
-          <div class="text-xs text-rose-400 font-bold mb-1">【對局最終結果】</div>
-          <div class="text-4xl font-black text-rose-400 mb-2">😈 老朝奉陣營 獲勝！</div>
-          <div class="text-3xl font-black text-rose-300 font-mono mb-3">最終總分：${totalScore} 分（0～5分）</div>
-          <div class="text-sm text-neutral-200 text-left space-y-2 bg-neutral-950 p-3.5 rounded-xl border border-neutral-800">
-            ${scoreDetails.map(d => `<div>• ${d}</div>`).join('')}
-          </div>
-        `;
         playAudioEffect(false);
         speak("老朝奉陣營 獲勝");
       }
