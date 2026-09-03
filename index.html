@@ -324,10 +324,10 @@
             </div>
           </div>
 
-          <!-- 第二名：保留，同時公開真實資訊（文字 + 語音） -->
-          <div class="bg-neutral-950 border border-emerald-600/60 rounded-xl p-3.5">
+          <!-- 第二名：保留，同時公開真實資訊（框框顏色隨真偽動態變換） -->
+          <div id="rank2CardBox" class="bg-neutral-950 border border-emerald-600/60 rounded-xl p-3.5 transition">
             <div class="flex justify-between items-center">
-              <span class="text-xs font-bold text-emerald-400">🥈 第二名獸首</span>
+              <span id="rank2Badge" class="text-xs font-bold text-emerald-400">🥈 第二名獸首</span>
               <span id="rank2Votes" class="text-xs text-neutral-400">得票：0票</span>
             </div>
             <div id="rank2Name" class="text-2xl font-black text-neutral-100 my-1">牛</div>
@@ -463,6 +463,8 @@
       fangZhenClickCounts: {},
       fangZhenDistinctBeasts: {},
       fangZhenLockedMessage: null,
+      eggBlackHeibao: false,
+      eggWhiteBaihu: false,
       step: 'setup',            // 'setup' | 'roles' | 'handover' | 'turn' | 'voting' | 'person_handover' | 'person_voting' | 'gameover'
       playerCount: 8,           // 7 (4好3壞無姬雲浮) 或 8 (5好3壞含姬雲浮)
       players: [],              // [{ id, name, colorId, role, isAmbushed, isPermanentlyAmbushed, confusedRound }]
@@ -823,6 +825,10 @@
       }
       roleList.sort(() => Math.random() - 0.5);
 
+      // 每一局開始後，黑色及白色玩家各有 10% 獨立機率改變稱呼（黑色變黑包、白色變白虎）
+      G.eggBlackHeibao = Math.random() < 0.10;
+      G.eggWhiteBaihu = Math.random() < 0.10;
+
       G.players.forEach((p, idx) => {
         p.role = roleList[idx];
         p.isAmbushed = false;
@@ -997,8 +1003,8 @@
     }
 
     function getPlayerLabel(p) {
-      const c = COLOR_PALETTE.find(x => x.id === p.colorId) || COLOR_PALETTE[0];
-      return `${c.name}色 ${p.name}`;
+      const cName = getColorDisplayName(p.colorId);
+      return `${cName} ${p.name}`;
     }
 
     /* ============================================================
@@ -1008,7 +1014,7 @@
       const nextP = G.players.find(p => p.id === G.activePlayerId);
       if (!nextP) return;
       const c = COLOR_PALETTE.find(x => x.id === nextP.colorId) || COLOR_PALETTE[0];
-      document.getElementById('handoverPlayerTag').innerHTML = `<span class="px-2 py-0.5 rounded ${c.bgClass}">${c.name}色</span> <span class="text-amber-300 font-bold">${nextP.name}</span>`;
+      document.getElementById('handoverPlayerTag').innerHTML = `<span class="px-2 py-0.5 rounded ${c.bgClass}">${getColorDisplayName(nextP.colorId)}</span> <span class="text-amber-300 font-bold">${nextP.name}</span>`;
     }
 
     function enterPlayerTurn() {
@@ -1052,7 +1058,7 @@
       if (!curP) return;
       const c = COLOR_PALETTE.find(x => x.id === curP.colorId) || COLOR_PALETTE[0];
 
-      document.getElementById('turnPlayerTitle').innerText = `${c.name}色 ${curP.name} 的回合`;
+      document.getElementById('turnPlayerTitle').innerText = `${getColorDisplayName(curP.colorId)} ${curP.name} 的回合`;
       document.getElementById('turnColorDot').className = `w-3.5 h-3.5 rounded-full border ${c.dotClass} inline-block`;
       document.getElementById('turnRoundBadge').innerText = `第 ${G.currentRoundIdx + 1} 回合`;
 
@@ -1069,11 +1075,11 @@
         let infoStr = '';
         if (laoP) {
           const lc = COLOR_PALETTE.find(x => x.id === laoP.colorId);
-          infoStr += `${lc.name}: (老朝奉)  `;
+          infoStr += `${getColorDisplayName(laoP.colorId)}: (老朝奉)  `;
         }
         if (yaoP) {
           const yc = COLOR_PALETTE.find(x => x.id === yaoP.colorId);
-          infoStr += `${yc.name}: (藥不然)`;
+          infoStr += `${getColorDisplayName(yaoP.colorId)}: (藥不然)`;
         }
         bannerText.innerText = infoStr;
       } else {
@@ -1658,7 +1664,7 @@
           btn.type = 'button';
           btn.className = `p-3 rounded-xl border text-xs font-bold transition flex items-center justify-between ${c.bgClass} ${isSelected ? 'ring-4 ring-white scale-[1.03]' : 'opacity-85 hover:opacity-100'}`;
           btn.innerHTML = `
-            <span>${c.name}色</span>
+            <span>${getColorDisplayName(p.colorId)}</span>
             <span class="text-base font-black">${p.name}</span>
             <span>${isSelected ? '✓' : ''}</span>
           `;
@@ -1675,7 +1681,7 @@
           const sc = COLOR_PALETTE.find(x => x.id === selectedPlayer.colorId) || COLOR_PALETTE[0];
           confirmWrapper.classList.remove('hidden');
           confirmBtn.className = `px-8 py-3.5 rounded-xl font-black text-sm shadow-xl transition transform hover:scale-[1.02] border ${sc.bgClass}`;
-          confirmBtn.innerHTML = `確認選擇此玩家（${sc.name}色 ${selectedPlayer.name}） ➔`;
+          confirmBtn.innerHTML = `確認選擇此玩家（${getColorDisplayName(selectedPlayer.colorId)} ${selectedPlayer.name}） ➔`;
           smoothScrollTo('stepCConfirmWrapper', 'center');
         } else {
           confirmWrapper.classList.add('hidden');
@@ -1832,13 +1838,20 @@
       document.getElementById('rank2Votes').innerText = `得票：${res.rank2.votes} 票`;
       
       const truthBox = document.getElementById('rank2TruthBox');
+      const rank2Box = document.getElementById('rank2CardBox');
+      const rank2Badge = document.getElementById('rank2Badge');
       const isReal = res.rank2.isReal;
       
+      // 第二名獸首公開時，外層欄位框框顏色隨真品/贗品做變化
       if (isReal) {
-        truthBox.className = "text-base font-black text-emerald-300 bg-emerald-950/60 border border-emerald-700/60 p-3 rounded mt-2";
+        if (rank2Box) rank2Box.className = "bg-neutral-950 border-2 border-emerald-500 bg-emerald-950/20 rounded-xl p-3.5 transition shadow-lg shadow-emerald-950/40";
+        if (rank2Badge) rank2Badge.className = "text-xs font-black text-emerald-400";
+        truthBox.className = "text-base font-black text-emerald-300 bg-emerald-950/80 border border-emerald-500/80 p-3 rounded mt-2";
         truthBox.innerText = `📢 第二名公開真實資訊：【真品】`;
       } else {
-        truthBox.className = "text-base font-black text-rose-300 bg-rose-950/60 border border-rose-700/60 p-3 rounded mt-2";
+        if (rank2Box) rank2Box.className = "bg-neutral-950 border-2 border-rose-600 bg-rose-950/20 rounded-xl p-3.5 transition shadow-lg shadow-rose-950/40";
+        if (rank2Badge) rank2Badge.className = "text-xs font-black text-rose-400";
+        truthBox.className = "text-base font-black text-rose-300 bg-rose-950/80 border border-rose-600/80 p-3 rounded mt-2";
         truthBox.innerText = `📢 第二名公開真實資訊：【贗品】`;
       }
 
@@ -1902,7 +1915,7 @@
       const curVoter = G.players[G.personVoteIdx];
       if (!curVoter) return;
       const c = COLOR_PALETTE.find(x => x.id === curVoter.colorId) || COLOR_PALETTE[0];
-      document.getElementById('pvHandoverPlayerTag').innerHTML = `<span class="px-2 py-0.5 rounded ${c.bgClass}">${c.name}色</span> <span class="text-amber-300 font-bold">${curVoter.name}</span>`;
+      document.getElementById('pvHandoverPlayerTag').innerHTML = `<span class="px-2 py-0.5 rounded ${c.bgClass}">${getColorDisplayName(curVoter.colorId)}</span> <span class="text-amber-300 font-bold">${curVoter.name}</span>`;
     }
 
     function enterPersonVoteTurn() {
@@ -1920,7 +1933,7 @@
       // 顏色字要有顏色色底
       document.getElementById('pvBigTitle').innerHTML = `
         <span>玩家</span>
-        <span class="${c.bgClass} px-2.5 py-0.5 rounded font-black mx-1.5 inline-block text-sm sm:text-base">${c.name}</span>
+        <span class="${c.bgClass} px-2.5 py-0.5 rounded font-black mx-1.5 inline-block text-sm sm:text-base">${getColorDisplayName(curVoter.colorId)}</span>
         <span>，請投出您心目中的人選</span>
       `;
 
@@ -1935,7 +1948,7 @@
         btn.type = 'button';
         btn.className = `p-3.5 rounded-xl border text-xs font-bold transition flex items-center justify-between ${pc.bgClass} ${isSelected ? 'ring-4 ring-white scale-[1.03]' : 'opacity-85 hover:opacity-100'}`;
         btn.innerHTML = `
-          <span>${pc.name}色</span>
+          <span>${getColorDisplayName(p.colorId)}</span>
           <span class="text-base font-black">${p.name}</span>
           <span>${isSelected ? '✓' : ''}</span>
         `;
@@ -1955,7 +1968,7 @@
         const chosenColor = COLOR_PALETTE.find(x => x.id === chosenPlayer.colorId) || COLOR_PALETTE[0];
         confirmWrapper.classList.remove('hidden');
         confirmBtn.className = `w-full py-3.5 rounded-xl font-black text-sm shadow-xl transition border ${chosenColor.bgClass}`;
-        confirmBtn.innerHTML = `確認投給：${chosenColor.name}色 ${chosenPlayer.name} ➔`;
+        confirmBtn.innerHTML = `確認投給：${getColorDisplayName(chosenPlayer.colorId)} ${chosenPlayer.name} ➔`;
         smoothScrollTo('pvConfirmWrapper', 'center');
       } else {
         confirmWrapper.classList.add('hidden');
@@ -2071,14 +2084,14 @@
         }
       }
 
-      // 4. 【老朝奉】沒能夠投到【許願】則加 2 分 (強制換行與對齊)
+      // 4. 【老朝奉】若投中【許願】則許願被找到加0分；若未投中（含投鄭國渠或他人）則許願沒有被找到，許願陣營加2分
       if (laoPlayer && xuPlayer) {
         const laoHitXu = (G.personVotes[laoPlayer.id] === xuPlayer.id);
         if (!laoHitXu) {
           totalScore += 2;
           scoreDetails.push(`
             <div class="p-2.5 rounded-xl bg-neutral-900/80 border border-neutral-800/80">
-              <div class="font-bold text-neutral-200 text-sm">• 老朝奉沒有被找到</div>
+              <div class="font-bold text-neutral-200 text-sm">• 許願沒有被找到</div>
               <div class="text-xs text-neutral-400 mt-1 pl-3.5">
                 許願方陣營加<span class="text-blue-400 font-black text-sm">2分</span>
               </div>
@@ -2087,7 +2100,7 @@
         } else {
           scoreDetails.push(`
             <div class="p-2.5 rounded-xl bg-neutral-900/80 border border-neutral-800/80">
-              <div class="font-bold text-neutral-200 text-sm">• 老朝奉投中許願</div>
+              <div class="font-bold text-neutral-200 text-sm">• 許願被找到</div>
               <div class="text-xs text-neutral-400 mt-1 pl-3.5">
                 許願方陣營加<span class="text-red-500 font-bold text-sm">0分</span>
               </div>
@@ -2102,15 +2115,15 @@
 
       const winnerTitleHtml = isXuWon ? `
         <div class="text-xs text-amber-400 font-bold mb-1 tracking-widest">【對局最終結果】</div>
-        <div class="text-3xl font-black text-amber-300 mb-2 leading-tight">
-          🎉 許願陣營<br><span class="text-4xl">獲勝！</span>
+        <div class="text-3xl sm:text-4xl font-black text-amber-300 mb-2 leading-snug">
+          🎉 許願陣營<br>獲勝！
         </div>
         <div class="text-3xl font-black text-emerald-400 font-mono">最終總分：${totalScore} 分</div>
         <div class="text-sm font-bold text-neutral-400 mt-0.5 mb-3">（≥ 6分）</div>
       ` : `
         <div class="text-xs text-rose-400 font-bold mb-1 tracking-widest">【對局最終結果】</div>
-        <div class="text-3xl font-black text-rose-400 mb-2 leading-tight">
-          😈 老朝奉陣營<br><span class="text-4xl">獲勝！</span>
+        <div class="text-3xl sm:text-4xl font-black text-rose-400 mb-2 leading-snug">
+          😈 老朝奉陣營<br>獲勝！
         </div>
         <div class="text-3xl font-black text-rose-300 font-mono">最終總分：${totalScore} 分</div>
         <div class="text-sm font-bold text-neutral-400 mt-0.5 mb-3">（0～5分）</div>
@@ -2203,14 +2216,14 @@
         return `
           <div class="flex justify-between items-center text-xs py-1 px-2 rounded bg-neutral-900/80 border border-neutral-800">
             <div class="flex items-center space-x-1.5">
-              <span class="${vc.bgClass} px-1.5 py-0.5 rounded text-[10px] font-black">${vc.name}色</span>
+              <span class="${vc.bgClass} px-1.5 py-0.5 rounded text-[10px] font-black">${getColorDisplayName(voter.colorId)}</span>
               <b class="${isGoodVoter ? 'text-blue-400' : 'text-red-500'} font-black">(${voter.role})</b>
               ${isZheng ? '<span class="text-rose-400 font-bold text-[10px]">[無效票]</span>' : ''}
             </div>
             <div class="flex items-center space-x-1.5">
               <span class="text-neutral-500 text-[10px]">➔ 投給</span>
               ${tc ? `
-                <span class="${tc.bgClass} px-1.5 py-0.5 rounded text-[10px] font-black">${tc.name}色</span>
+                <span class="${tc.bgClass} px-1.5 py-0.5 rounded text-[10px] font-black">${getColorDisplayName(targetPlayer.colorId)}</span>
                 <b class="${isGoodTarget ? 'text-blue-400' : 'text-red-500'} font-black">(${targetPlayer.role})</b>
               ` : '<span class="text-neutral-500">未投票</span>'}
             </div>
@@ -2286,7 +2299,7 @@
           <div class="flex items-center justify-between border-b border-neutral-700 pb-1.5 mb-1.5">
             <div class="flex items-center space-x-2">
               <span class="w-3 h-3 rounded-full ${c.dotClass} border"></span>
-              <span class="font-bold text-neutral-100">${c.name}色 ${p.name}</span>
+              <span class="font-bold text-neutral-100">${getColorDisplayName(p.colorId)} ${p.name}</span>
             </div>
             <span class="text-[11px] font-bold ${goodRoleNames.includes(p.role) ? 'text-blue-400' : 'text-red-500'}">【${p.role}】</span>
           </div>
@@ -2405,9 +2418,21 @@
       document.getElementById('voiceBtn').innerText = voiceActive ? '🔊 語音: 開' : '🔈 語音: 關';
     }
 
-        // 提示音顏色播報（20% 機率念成「X國」，80% 念成「X色」）
-    function getSpokenColorName(colorName) {
-      return (Math.random() < 0.2) ? `${colorName}國` : `${colorName}色`;
+        // 顏色顯示文字（若觸發彩蛋，黑色顯示「黑包」、白色顯示「白虎」，其餘顯示「X色」）
+    function getColorDisplayName(colorIdOrName) {
+      if ((colorIdOrName === 'black' || colorIdOrName === '黑') && G.eggBlackHeibao) return '黑包';
+      if ((colorIdOrName === 'white' || colorIdOrName === '白') && G.eggWhiteBaihu) return '白虎';
+      const c = COLOR_PALETTE.find(x => x.id === colorIdOrName || x.name === colorIdOrName);
+      return c ? `${c.name}色` : colorIdOrName;
+    }
+
+    // 提示語音顏色播報（若觸發彩蛋，整場直接改念「黑包」/「白虎」；其餘顏色 20% 機率念「X國」，80% 念「X色」）
+    function getSpokenColorName(colorIdOrName) {
+      if ((colorIdOrName === 'black' || colorIdOrName === '黑') && G.eggBlackHeibao) return '黑包';
+      if ((colorIdOrName === 'white' || colorIdOrName === '白') && G.eggWhiteBaihu) return '白虎';
+      const c = COLOR_PALETTE.find(x => x.id === colorIdOrName || x.name === colorIdOrName);
+      const baseName = c ? c.name : colorIdOrName;
+      return (Math.random() < 0.2) ? `${baseName}國` : `${baseName}色`;
     }
 
     function speak(text) {
