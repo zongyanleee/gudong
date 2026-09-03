@@ -425,7 +425,7 @@
     /* ============================================================
        全域常數與調色盤 (Colors & Constants)
        ============================================================ */
-    const STORAGE_KEY = 'gudong_boardgame_rules_v21';
+    const STORAGE_KEY = 'gudong_boardgame_rules_v22';
     const MASTER_PROFILES_KEY = 'gudong_master_profiles_v2';
     const NICKNAME_STORAGE_KEY = 'gudong_saved_nicknames_v1';
 
@@ -749,7 +749,7 @@
       saveState();
       renderAll();
       const c0 = COLOR_PALETTE.find(x => x.id === G.players[0].colorId) || COLOR_PALETTE[0];
-      speak(`進入確認角色環節，${c0.name}色確認`);
+      speak(`進入確認角色環節，${getSpokenColorName(c0.name)}確認`);
     }
 
     /* ============================================================
@@ -816,7 +816,7 @@
         renderRoleRevealView();
         const nextP = G.players[G.roleRevealIdx];
         const nextC = COLOR_PALETTE.find(x => x.id === nextP.colorId) || COLOR_PALETTE[0];
-        speak(`${nextC.name}色確認`);
+        speak(`${getSpokenColorName(nextC.name)}確認`);
       } else {
         const randStarterIdx = Math.floor(Math.random() * G.players.length);
         const starter = G.players[randStarterIdx];
@@ -1078,10 +1078,17 @@
         displayText = `【${b.name}】    ${isReal ? '【真品】' : '【贗品】'}`;
       }
 
-      G.inspectedBeastsInTurn.push({
-        beastName: b.name,
-        resultText: displayText
-      });
+      if (curP.role === '方震' && !isUnderAmbush) {
+        G.inspectedBeastsInTurn = [{
+          beastName: b.name,
+          resultText: displayText
+        }];
+      } else {
+        G.inspectedBeastsInTurn.push({
+          beastName: b.name,
+          resultText: displayText
+        });
+      }
 
       // 寫入軌跡
       const rKey = `r${G.currentRoundIdx + 1}`;
@@ -1098,7 +1105,8 @@
       document.getElementById('appraiseResultBox').classList.remove('hidden');
       saveState();
       renderStepABeasts(curP);
-      // 在按下下一步之前，畫面不會往下滑動！
+      // 在按下下一步之前，畫面怎麼按都不會往下滑動，強制保持置頂
+      window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
     function goToStepB() {
@@ -1540,7 +1548,7 @@
       renderAll();
 
       const nextLabel = getPlayerLabel(nextP);
-      speak(`${ntc.name}色`);
+      speak(getSpokenColorName(ntc.name));
     }
 
     /* ============================================================
@@ -1729,7 +1737,7 @@
         renderAll();
         const curVoter = G.players[0];
         const vc = COLOR_PALETTE.find(x => x.id === curVoter.colorId) || COLOR_PALETTE[0];
-        speak(`三回合鑑寶結束・進入鑑人投票，${vc.name}色`);
+        speak(`三回合鑑寶結束・進入鑑人投票，${getSpokenColorName(vc.name)}`);
       }
     }
 
@@ -1821,7 +1829,7 @@
         renderAll();
         const nextVoter = G.players[G.personVoteIdx];
         const nvc = COLOR_PALETTE.find(x => x.id === nextVoter.colorId) || COLOR_PALETTE[0];
-        speak(`${nvc.name}色`);
+        speak(getSpokenColorName(nvc.name));
       } else {
         G.step = 'gameover';
         saveState();
@@ -2241,6 +2249,11 @@
     function toggleVoice() {
       voiceActive = !voiceActive;
       document.getElementById('voiceBtn').innerText = voiceActive ? '🔊 語音: 開' : '🔈 語音: 關';
+    }
+
+        // 提示音顏色播報（20% 機率念成「X國」，80% 念成「X色」）
+    function getSpokenColorName(colorName) {
+      return (Math.random() < 0.2) ? `${colorName}國` : `${colorName}色`;
     }
 
     function speak(text) {
