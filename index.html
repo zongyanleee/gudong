@@ -463,6 +463,8 @@
       fangZhenClickCounts: {},
       fangZhenDistinctBeasts: {},
       fangZhenLockedMessage: null,
+      fangZhenHistory: {}, // { [playerId]: campName }
+      personVoteQueue: [], // 鑑人投票順序 (強制從黑色開始)
       eggBlackHeibao: false,
       eggWhiteBaihu: false,
       step: 'setup',            // 'setup' | 'roles' | 'handover' | 'turn' | 'voting' | 'person_handover' | 'person_voting' | 'gameover'
@@ -1331,27 +1333,67 @@
       }
       // ---------------- 【方震】：強制發動能力，無法跳過；確認後鎖定 ----------------
       else if (curP.role === '方震') {
+        if (!G.fangZhenHistory) G.fangZhenHistory = {};
         const otherPlayers = G.players.filter(p => p.id !== curP.id);
+        
+        // 過去回合已查驗紀錄清單
+        let historyEntries = Object.entries(G.fangZhenHistory);
+        let historyBlockHtml = '';
+        if (historyEntries.length > 0) {
+          let listItems = '';
+          historyEntries.forEach(([pIdStr, campName]) => {
+            const histP = G.players.find(x => x.id === parseInt(pIdStr));
+            if (histP) {
+              const hpc = COLOR_PALETTE.find(x => x.id === histP.colorId);
+              listItems += `
+                <div class="flex justify-between items-center text-xs py-1 px-2.5 rounded bg-neutral-900 border border-neutral-800">
+                  <span class="text-neutral-200 font-bold">${hpc.name}色 ${histP.name}</span>
+                  <span class="font-black ${campName.includes('許願') ? 'text-blue-400' : 'text-red-500'}">【${campName}】</span>
+                </div>
+              `;
+            }
+          });
+          historyBlockHtml = `
+            <div class="p-3 bg-neutral-900/90 border border-neutral-800 rounded-xl space-y-1.5 mb-2">
+              <div class="text-xs font-bold text-amber-400">📜 前回合已驗過的玩家（已鎖定不可再選）：</div>
+              <div class="space-y-1">${listItems}</div>
+            </div>
+          `;
+        }
+
         let playerButtons = '';
         otherPlayers.forEach(p => {
           const pc = COLOR_PALETTE.find(x => x.id === p.colorId);
+          const alreadyInspectedCamp = G.fangZhenHistory[p.id];
           const isSelected = G.fangZhenSelectedTargetId === p.id;
+          const cannotSelectThis = isLocked || !!alreadyInspectedCamp;
+
           playerButtons += `
-            <button type="button" onclick="fangZhenSelectPlayer(${p.id})" ${isLocked ? 'disabled' : ''} class="p-3 rounded-xl border bg-neutral-900 border-neutral-700 hover:border-amber-500 transition flex items-center justify-between ${isSelected ? 'ring-2 ring-amber-400 border-amber-400' : ''} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}">
-              <span class="text-amber-300 text-xl font-black">${pc.name}</span>
-              <span class="text-sm text-neutral-200 font-bold">${p.name}</span>
+            <button type="button" onclick="fangZhenSelectPlayer(${p.id})" ${cannotSelectThis ? 'disabled' : ''} class="p-3 rounded-xl border bg-neutral-900 transition flex flex-col justify-center items-center text-center relative ${
+              alreadyInspectedCamp 
+                ? 'border-neutral-800 opacity-40 cursor-not-allowed pointer-events-none' 
+                : (isSelected ? 'ring-2 ring-amber-400 border-amber-400' : 'border-neutral-700 hover:border-amber-500')
+            } ${isLocked ? 'cursor-not-allowed opacity-50' : ''}">
+              <div class="flex items-center justify-between w-full">
+                <span class="text-amber-300 text-xl font-black">${pc.name}</span>
+                <span class="text-xs text-neutral-200 font-bold">${p.name}</span>
+              </div>
+              ${alreadyInspectedCamp ? `<span class="text-[10px] font-black mt-1 ${alreadyInspectedCamp.includes('許願') ? 'text-blue-400' : 'text-red-500'}">已驗：${alreadyInspectedCamp}</span>` : ''}
             </button>
           `;
         });
 
         container.innerHTML = `
           <div class="p-4 bg-neutral-950 border border-neutral-800 rounded-xl space-y-3">
-            <div class="text-xs text-neutral-300 font-bold">【方震技能】請點擊查驗一名其他顏色玩家的所屬陣營（強制查驗）：</div>
+            <div class="text-xs text-neutral-300 font-bold">【方震技能】請查驗一名未驗過之玩家陣營（強制查驗）：</div>
+            
+            ${historyBlockHtml}
+
             <div class="grid grid-cols-2 gap-2">
               ${playerButtons}
             </div>
 
-            <!-- 確認按鈕 (未確認前不給下一步，強制發動) -->
+            <!-- 確認按鈕 -->
             <div class="${!isLocked ? '' : 'hidden'} text-center pt-1">
               <button type="button" onclick="fangZhenConfirmCheck()" ${G.fangZhenSelectedTargetId ? '' : 'disabled'} class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-neutral-950 font-black text-xs rounded-xl shadow-md disabled:opacity-40 disabled:cursor-not-allowed">
                 確認查驗該玩家陣營 ➔
@@ -1359,14 +1401,14 @@
             </div>
 
             <div id="fzResultBox" class="${G.fangZhenRevealedCamp ? '' : 'hidden'} p-3 bg-neutral-900 border border-amber-500/60 rounded-xl text-center space-y-1">
-              <div class="text-xs text-neutral-400">查驗陣營結果：</div>
+              <div class="text-xs text-neutral-400">本回合查驗陣營結果：</div>
               <div class="text-lg font-black text-amber-400">${G.fangZhenRevealedCamp || ''}</div>
               <div class="text-[10px] text-neutral-500">（頁面已確認鎖定）</div>
             </div>
 
             <!-- 下一步按鈕：沒確認前 disabled -->
             <button onclick="finishStepB()" ${isLocked ? '' : 'disabled'} class="w-full py-3 rounded-xl border font-bold text-sm ${isLocked ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-100 border-neutral-700 cursor-pointer shadow-md' : 'bg-neutral-900 text-neutral-600 border-neutral-800 cursor-not-allowed opacity-40'}">
-              ${isLocked ? '下一步:指定玩家 ➔' : '請先點選玩家並確認查驗'}
+              ${isLocked ? '下一步:指定玩家 ➔' : '請先點選未驗過的玩家並確認查驗'}
             </button>
           </div>
         `;
@@ -1506,6 +1548,7 @@
     // 方震選擇玩家
     function fangZhenSelectPlayer(targetId) {
       if (G.abilityLockedInCurrentTurn) return;
+      if (G.fangZhenHistory && G.fangZhenHistory[targetId]) return; // 已驗過的人無法被選擇！
       G.fangZhenSelectedTargetId = targetId;
       saveState();
       renderStepBRoleAbility(G.players.find(p => p.id === G.activePlayerId));
@@ -1520,6 +1563,10 @@
 
       const goodCampRoles = ['許願', '方震', '黃煙煙', '木戶加奈', '姬雲浮'];
       const campName = goodCampRoles.includes(targetP.role) ? '許願陣營' : '老朝奉陣營';
+
+      // 保存至歷史查驗紀錄中，跨回合永久記憶不可重複查驗
+      if (!G.fangZhenHistory) G.fangZhenHistory = {};
+      G.fangZhenHistory[targetP.id] = campName;
 
       G.fangZhenRevealedCamp = `${tc.name}色 ${targetP.name} 為 【${campName}】`;
       G.abilityLockedInCurrentTurn = true;
@@ -1897,12 +1944,22 @@
         const starterLabel = getPlayerLabel(nextStarter);
         speak(`進入第 ${G.currentRoundIdx + 1} 回合！本輪由上一輪尾家：${starterLabel} 擔任首家。`);
       } else {
+        // 鑑人環節強制從黑色玩家開始投票
+        const blackIdx = G.players.findIndex(p => p.colorId === 'black');
+        const startIdx = blackIdx !== -1 ? blackIdx : 0;
+        G.personVoteQueue = [];
+        for (let i = 0; i < G.players.length; i++) {
+          const p = G.players[(startIdx + i) % G.players.length];
+          G.personVoteQueue.push(p.id);
+        }
         G.personVoteIdx = 0;
         G.pendingCandidateId = null;
         G.step = 'person_handover';
         saveState();
         renderAll();
-        const curVoter = G.players[0];
+
+        const firstVoterId = G.personVoteQueue[0];
+        const curVoter = G.players.find(p => p.id === firstVoterId);
         const vc = COLOR_PALETTE.find(x => x.id === curVoter.colorId) || COLOR_PALETTE[0];
         speak(`三回合鑑寶結束・進入鑑人投票，${getSpokenColorName(vc.name)}`);
       }
@@ -1912,7 +1969,8 @@
        階段 6 & 7：鑑人環節 (PERSON VOTING)
        ============================================================ */
     function renderPersonHandoverView() {
-      const curVoter = G.players[G.personVoteIdx];
+      const voterId = (G.personVoteQueue && G.personVoteQueue.length > 0) ? G.personVoteQueue[G.personVoteIdx] : (G.players[G.personVoteIdx] ? G.players[G.personVoteIdx].id : null);
+      const curVoter = G.players.find(p => p.id === voterId);
       if (!curVoter) return;
       const c = COLOR_PALETTE.find(x => x.id === curVoter.colorId) || COLOR_PALETTE[0];
       document.getElementById('pvHandoverPlayerTag').innerHTML = `<span class="px-2 py-0.5 rounded ${c.bgClass}">${getColorDisplayName(curVoter.colorId)}</span> <span class="text-amber-300 font-bold">${curVoter.name}</span>`;
@@ -1926,7 +1984,8 @@
     }
 
     function renderPersonVotingView() {
-      const curVoter = G.players[G.personVoteIdx];
+      const voterId = (G.personVoteQueue && G.personVoteQueue.length > 0) ? G.personVoteQueue[G.personVoteIdx] : (G.players[G.personVoteIdx] ? G.players[G.personVoteIdx].id : null);
+      const curVoter = G.players.find(p => p.id === voterId);
       if (!curVoter) return;
       const c = COLOR_PALETTE.find(x => x.id === curVoter.colorId) || COLOR_PALETTE[0];
 
@@ -1978,7 +2037,8 @@
     function confirmPersonVote() {
       if (!G.pendingCandidateId) return;
 
-      const curVoter = G.players[G.personVoteIdx];
+      const voterId = (G.personVoteQueue && G.personVoteQueue.length > 0) ? G.personVoteQueue[G.personVoteIdx] : (G.players[G.personVoteIdx] ? G.players[G.personVoteIdx].id : null);
+      const curVoter = G.players.find(p => p.id === voterId);
       G.personVotes[curVoter.id] = G.pendingCandidateId;
 
       const targetP = G.players.find(p => p.id === G.pendingCandidateId);
@@ -1989,12 +2049,15 @@
 
       G.pendingCandidateId = null;
 
-      if (G.personVoteIdx < G.players.length - 1) {
+      const totalVoters = (G.personVoteQueue && G.personVoteQueue.length > 0) ? G.personVoteQueue.length : G.players.length;
+
+      if (G.personVoteIdx < totalVoters - 1) {
         G.personVoteIdx++;
         G.step = 'person_handover';
         saveState();
         renderAll();
-        const nextVoter = G.players[G.personVoteIdx];
+        const nextVoterId = G.personVoteQueue[G.personVoteIdx];
+        const nextVoter = G.players.find(p => p.id === nextVoterId);
         const nvc = COLOR_PALETTE.find(x => x.id === nextVoter.colorId) || COLOR_PALETTE[0];
         speak(getSpokenColorName(nvc.name));
       } else {
