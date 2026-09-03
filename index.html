@@ -425,7 +425,7 @@
     /* ============================================================
        全域常數與調色盤 (Colors & Constants)
        ============================================================ */
-    const STORAGE_KEY = 'gudong_boardgame_rules_v22';
+    const STORAGE_KEY = 'gudong_boardgame_rules_v23';
     const MASTER_PROFILES_KEY = 'gudong_master_profiles_v2';
     const NICKNAME_STORAGE_KEY = 'gudong_saved_nicknames_v1';
 
@@ -1078,17 +1078,11 @@
         displayText = `【${b.name}】    ${isReal ? '【真品】' : '【贗品】'}`;
       }
 
-      if (curP.role === '方震' && !isUnderAmbush) {
-        G.inspectedBeastsInTurn = [{
-          beastName: b.name,
-          resultText: displayText
-        }];
-      } else {
-        G.inspectedBeastsInTurn.push({
-          beastName: b.name,
-          resultText: displayText
-        });
-      }
+      // 方震在查驗階段可重複按同一種獸首，每次查驗結果皆保留累加，絕不消失！
+      G.inspectedBeastsInTurn.push({
+        beastName: b.name,
+        resultText: displayText
+      });
 
       // 寫入軌跡
       const rKey = `r${G.currentRoundIdx + 1}`;
