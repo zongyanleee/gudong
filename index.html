@@ -124,7 +124,7 @@
           <div id="roleCardCover" class="absolute inset-0 bg-neutral-950/95 flex flex-col items-center justify-center z-10">
             <div class="text-2xl mb-1">🔒</div>
             <div class="text-sm font-black text-amber-400">點擊翻開查看角色名字</div>
-            <div class="text-[10px] text-neutral-500 mt-1">（必須點開確認後，方可按確認按鈕）</div>
+            <div class="text-[10px] text-neutral-500 mt-1">（點擊翻開後不可再遮蔽，確認後按下方換人）</div>
           </div>
           <!-- 統一灰色字體，僅顯示角色名字 -->
           <div id="roleCardText" class="mask-blur">
@@ -267,7 +267,7 @@
     </section>
 
     <!-- ================= 階段 5：鑑寶與投票 (VOTING & REVEAL) ================= -->
-    <section id="secVoting" class="hidden space-y-4">
+    <section id="secVoting" class="hidden space-y-4 pb-[55vh]">
       <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-xl">
         <div class="flex justify-between items-center border-b border-neutral-800 pb-3 mb-3">
           <div>
@@ -425,7 +425,7 @@
     /* ============================================================
        全域常數與調色盤 (Colors & Constants)
        ============================================================ */
-    const STORAGE_KEY = 'gudong_boardgame_rules_v18';
+    const STORAGE_KEY = 'gudong_boardgame_rules_v20';
     const MASTER_PROFILES_KEY = 'gudong_master_profiles_v2';
     const NICKNAME_STORAGE_KEY = 'gudong_saved_nicknames_v1';
 
@@ -753,30 +753,24 @@
        階段 2：確認角色 (未查看則不給按確認按鈕)
        ============================================================ */
     function toggleRoleCardMask() {
-      G.roleCardUnmasked = !G.roleCardUnmasked;
+      // 若已點擊翻開，就無法再點回去遮蔽！
+      if (G.roleCardUnmasked) return;
+
+      G.roleCardUnmasked = true;
       const cover = document.getElementById('roleCardCover');
       const text = document.getElementById('roleCardText');
       const confirmBtn = document.getElementById('roleConfirmBtn');
       const charNameEl = document.getElementById('roleCharName');
 
-      if (G.roleCardUnmasked) {
-        // 點開時才注入角色名稱，徹底杜絕交接時的瞬間走光
-        const p = G.players[G.roleRevealIdx];
-        charNameEl.innerText = p ? p.role : '???';
-        cover.classList.add('opacity-0', 'pointer-events-none');
-        text.classList.add('unmasked');
-        // 解鎖按鈕
-        confirmBtn.disabled = false;
-        confirmBtn.className = "w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-amber-400 font-bold rounded-xl border border-neutral-700 transition cursor-pointer";
-      } else {
-        // 遮蔽時立即清空文字為 ???
-        charNameEl.innerText = '???';
-        cover.classList.remove('opacity-0', 'pointer-events-none');
-        text.classList.remove('unmasked');
-        // 重新鎖定按鈕
-        confirmBtn.disabled = true;
-        confirmBtn.className = "w-full py-3 bg-neutral-900 text-neutral-600 font-bold rounded-xl border border-neutral-800 transition cursor-not-allowed opacity-50";
-      }
+      // 點開時才注入角色名稱
+      const p = G.players[G.roleRevealIdx];
+      charNameEl.innerText = p ? p.role : '???';
+      cover.classList.add('opacity-0', 'pointer-events-none');
+      text.classList.add('unmasked');
+
+      // 解鎖確認按鈕
+      confirmBtn.disabled = false;
+      confirmBtn.className = "w-full py-3.5 bg-neutral-800 hover:bg-neutral-700 text-amber-400 font-black text-base rounded-xl border border-neutral-700 transition cursor-pointer";
     }
 
     function renderRoleRevealView() {
@@ -871,12 +865,18 @@
     /* ============================================================
        階段 4：玩家個人回合流程 (TURN a, b, c)
        ============================================================ */
-        // 頁面平滑自動滾動（操作後自動往上滑，下方預留半個頁面空白）
-    function smoothScrollTo(elementId, blockPosition = 'center') {
+        // 頁面平滑自動滾動（精準對齊在下一欄位標題上方，扣除頂部固定導航列 68px，下方預留半頁空白）
+    function smoothScrollTo(elementId, blockPosition = 'start', topOffset = 68) {
       setTimeout(() => {
         const el = document.getElementById(elementId);
         if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: blockPosition });
+          const rect = el.getBoundingClientRect();
+          const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+          const targetY = currentScroll + rect.top - topOffset;
+          window.scrollTo({
+            top: Math.max(0, targetY),
+            behavior: 'smooth'
+          });
         }
       }, 100);
     }
@@ -963,10 +963,12 @@
         btn.type = 'button';
         const inspectedObj = G.inspectedBeastsInTurn.find(item => item.beastName === b.name);
         const isChosen = !!inspectedObj;
+        // 已查驗過的獸首鎖定不能重複查驗（許願強制選擇兩個不同的獸首）
+        const cannotClick = isLocked || isChosen;
 
         btn.className = `p-3 rounded-xl text-center transition flex flex-col items-center justify-center border ${
           isChosen 
-            ? 'bg-amber-950/80 border-amber-500 ring-2 ring-amber-400' 
+            ? 'bg-amber-950/80 border-amber-500 ring-2 ring-amber-400 opacity-90 cursor-not-allowed pointer-events-none' 
             : (isLocked ? 'bg-neutral-900/50 border-neutral-800 opacity-40 cursor-not-allowed pointer-events-none' : 'bg-neutral-950 hover:bg-neutral-800 border-neutral-700 hover:border-amber-500 cursor-pointer')
         }`;
 
@@ -975,7 +977,7 @@
           <span class="text-[9px] text-neutral-400 mt-1">${isChosen ? '已查驗' : (isLocked ? '已鎖定' : '點擊')}</span>
         `;
 
-        if (!isLocked) {
+        if (!cannotClick) {
           btn.onclick = () => appraiseBeast(b);
         }
         grid.appendChild(btn);
@@ -1007,6 +1009,10 @@
       const isUnderAmbush = curP.isAmbushed || curP.isPermanentlyAmbushed;
       const maxInspectCount = (curP.role === '許願' && !isUnderAmbush) ? 2 : 1;
       if (curP.role !== '方震' && G.inspectedBeastsInTurn.length >= maxInspectCount) return;
+
+      // 許願強制選擇兩個不同的獸首，不可同一個連點兩下
+      const alreadyInspected = G.inspectedBeastsInTurn.some(item => item.beastName === b.name);
+      if (alreadyInspected) return;
 
       let displayText = '';
 
@@ -1065,7 +1071,7 @@
       G.turnSubStep = 'b';
       saveState();
       renderTurnView();
-      smoothScrollTo('stepB', 'start');
+      smoothScrollTo('stepB', 'start', 68);
     }
 
     // 渲染步驟 b：角色能力
@@ -1243,7 +1249,7 @@
               <button type="button" onclick="yaoSelectTarget(${p.id})" ${isLocked ? 'disabled' : ''} class="p-3 rounded-xl border bg-neutral-900 border-neutral-700 hover:border-amber-500 transition flex flex-col items-center justify-center relative ${isSelected ? 'ring-2 ring-rose-500 border-rose-500' : ''} ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}">
                 <span class="text-amber-300 text-xl font-black">${pc.name}</span>
                 <span class="text-[11px] text-neutral-300 font-bold">${p.name}</span>
-                ${isSelected ? `<span class="text-rose-400 font-black text-xs mt-1">幹死他${isLao ? ' <span class="text-amber-300 block text-[10px]">(你忍心嗎?)</span>' : ''}</span>` : ''}
+                ${isSelected ? (isLao ? '<span class="text-amber-300 font-black text-xs mt-1">你忍心嗎?</span>' : '<span class="text-rose-400 font-black text-xs mt-1">幹死他</span>') : ''}
               </button>
             `;
           });
@@ -1414,7 +1420,7 @@
       G.lastPlayerIdOfRound = G.activePlayerId;
       saveState();
       renderTurnView();
-      smoothScrollTo('stepC', 'start');
+      smoothScrollTo('stepC', 'start', 68);
     }
 
     // 流程 c: 選擇下一家玩家
@@ -1630,13 +1636,20 @@
         truthBox.innerText = `📢 第二名公開真實資訊：【贗品】`;
       }
 
+      // 語音公佈第二名獸首：先念完動物，停頓一下再說是真品/贗品
       if (triggerSpeech) {
-        if (isReal) {
-          speak(`${res.rank2.name}～是真品。爽啦爽啦SONG啦！`);
-        } else {
-          speak(`${res.rank2.name}～是贗品。真的很慘，沒救！`);
-        }
+        speak(res.rank2.name);
+        setTimeout(() => {
+          if (isReal) {
+            speak("是真品。爽啦爽啦SONG啦！");
+          } else {
+            speak("是贗品。真的很慘，沒救！");
+          }
+        }, 950);
       }
+
+      // 欄位自動上移對齊在投票統計結果標題上方 (頂部保留 68px 導航列間隙)
+      smoothScrollTo('voteResultArea', 'start', 68);
 
       const nextBtn = document.getElementById('advanceNextRoundBtn');
       if (G.currentRoundIdx < 2) {
