@@ -417,7 +417,6 @@
         </div>
 
         <!-- 頁籤 3：歷史對局紀錄 (單一展開 Accordion) -->
-        <!-- 頁籤 3：歷史對局紀錄 (單一展開 Accordion) -->
         <div id="tabContentHistory" class="hidden space-y-3">
           <!-- 總記錄場次與陣營勝率看板 (僅置於歷史對局分頁) -->
           <div class="grid grid-cols-3 gap-2 text-center mb-3">
@@ -2499,23 +2498,35 @@
     async function fetchAllHistoryGames() {
       if (isFirebaseReady && db) {
         try {
-          const snapshot = await db.collection(FIRESTORE_COLLECTION).orderBy('createdAt', 'desc').get();
+          // 使用純 get() 避免缺少 createdAt 欄位或缺少索引而拋出異常
+          const snapshot = await db.collection(FIRESTORE_COLLECTION).get();
           const list = [];
           snapshot.forEach(doc => {
             const data = doc.data();
+            const dateDisplay = data.formattedDateTime || 
+              (data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toLocaleString("zh-TW") : 
+              (data.timestamp ? new Date(data.timestamp).toLocaleString("zh-TW") : "歷史對局"));
             list.push({
               id: doc.id,
               ...data,
-              formattedDateTime: data.formattedDateTime || (data.createdAt ? data.createdAt.toDate().toLocaleString('zh-TW') : '近期對局')
+              formattedDateTime: dateDisplay
             });
           });
-          return { source: 'Cloud Firestore 雲端資料庫', list };
+
+          // 於前端依照時間戳記穩定倒序排列（最新在前）
+          list.sort((a, b) => {
+            const tA = a.timestamp ? new Date(a.timestamp).getTime() : (a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : 0);
+            const tB = b.timestamp ? new Date(b.timestamp).getTime() : (b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : 0);
+            return tB - tA;
+          });
+
+          return { source: "Cloud Firestore 雲端資料庫", list };
         } catch (e) {
           console.warn("Firestore 讀取失敗，改讀本機快取", e);
         }
       }
       const localList = JSON.parse(localStorage.getItem(OFFLINE_STORAGE_KEY) || "[]");
-      return { source: '本機快取', list: localList };
+      return { source: "本機快取", list: localList };
     }
 
     async function openStatsModal() {
@@ -3254,7 +3265,7 @@
     }
 
     function renderHistoryMatchListTab(games) {
-      document.getElementById('historyGamesCount').innerText = `共 ${games.length} 場`;
+      // 標題已簡化
       const container = document.getElementById('historyMatchList');
 
       if (games.length === 0) {
