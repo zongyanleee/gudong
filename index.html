@@ -411,7 +411,7 @@
         <!-- 頁籤 2：獸首數據庫 -->
         <div id="tabContentBeasts" class="hidden space-y-3">
           <div class="text-xs font-bold text-neutral-300">十二生肖獸首統計數據：</div>
-          <div id="beastsStatsList" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div id="beastsStatsList" class="grid grid-cols-2 gap-1.5 sm:gap-2">
             <div class="text-center py-8 text-neutral-500 text-xs col-span-2">載入中...</div>
           </div>
         </div>
@@ -3324,27 +3324,27 @@
         const realRate = item.appearedCount > 0 ? ((item.realCount / item.appearedCount) * 100).toFixed(1) + '%' : '0%';
         const inspectRate = item.eligibleInspectors > 0 ? ((item.clickedInspectors / item.eligibleInspectors) * 100).toFixed(1) + '%' : '0%';
 
-        // 獸首卡片新版型：左右兩欄，左欄縮短並垂直拉長字體，右欄分兩列且字體放大
+        // 獸首卡片手機雙欄版型：左欄動物微縮微拉長，右欄分兩列且標籤與數值緊湊排列
         return `
-          <div class="p-3 bg-neutral-950 border border-neutral-800 rounded-xl flex items-center shadow-md">
-            <!-- 左欄：放動物，寬度縮小，字體放大並垂直拉長 -->
-            <div class="w-12 sm:w-14 flex items-center justify-center border-r border-neutral-800/80 pr-2 mr-2.5 flex-shrink-0">
-              <span class="text-3xl sm:text-4xl font-black text-amber-300 font-serif inline-block transform scale-y-125 scale-x-90 select-none">
+          <div class="p-2 sm:p-2.5 bg-neutral-950 border border-neutral-800 rounded-xl flex items-center shadow-sm">
+            <!-- 左欄：動物字體微縮並垂直微拉長 -->
+            <div class="w-8 sm:w-9 flex items-center justify-center border-r border-neutral-800/80 pr-1.5 mr-2 flex-shrink-0">
+              <span class="text-xl sm:text-2xl font-black text-amber-300 font-serif inline-block transform scale-y-115 scale-x-95 select-none">
                 ${item.name}
               </span>
             </div>
 
-            <!-- 右欄：分兩列，字體放大，上列為是真品機率，下列為被查驗機率 -->
-            <div class="flex-1 flex flex-col justify-center space-y-1.5 min-w-0">
+            <!-- 右欄：分兩列，標籤與%緊湊排列(距離減半) -->
+            <div class="flex-1 flex flex-col justify-center space-y-0.5 min-w-0">
               <!-- 右欄上列 -->
-              <div class="flex items-center justify-between text-xs sm:text-sm">
-                <span class="text-neutral-300 font-bold whitespace-nowrap">是真品機率：</span>
-                <span class="font-black text-emerald-400 font-mono text-sm sm:text-base ml-1">${realRate}</span>
+              <div class="flex items-center text-[11px] sm:text-xs leading-tight">
+                <span class="text-neutral-300 font-medium whitespace-nowrap">是真品機率：</span>
+                <span class="font-black text-emerald-400 font-mono ml-1">${realRate}</span>
               </div>
               <!-- 右欄下列 -->
-              <div class="flex items-center justify-between text-xs sm:text-sm">
-                <span class="text-neutral-300 font-bold whitespace-nowrap">被查驗機率：</span>
-                <span class="font-black text-amber-400 font-mono text-sm sm:text-base ml-1">${inspectRate}</span>
+              <div class="flex items-center text-[11px] sm:text-xs leading-tight">
+                <span class="text-neutral-300 font-medium whitespace-nowrap">被查驗機率：</span>
+                <span class="font-black text-amber-400 font-mono ml-1">${inspectRate}</span>
               </div>
             </div>
           </div>
