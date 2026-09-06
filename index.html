@@ -447,14 +447,9 @@
 
       <!-- 彈窗底部操作按鈕 -->
       <div class="p-3 border-t border-neutral-800 bg-neutral-900/90 flex justify-between items-center text-xs">
-        <div class="flex items-center space-x-2">
-          <button onclick="refreshStatsData()" class="px-3 py-1.5 rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold transition flex items-center space-x-1">
-            <span>🔄 重新整理</span>
-          </button>
-          <button onclick="clearAllGameDatabase()" class="px-3 py-1.5 rounded-lg border border-rose-900 bg-rose-950/40 hover:bg-rose-900 text-rose-300 font-bold transition flex items-center space-x-1">
-            <span>🗑️ 清空資料庫</span>
-          </button>
-        </div>
+        <button onclick="refreshStatsData()" class="px-3 py-1.5 rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold transition flex items-center space-x-1">
+          <span>🔄 重新整理</span>
+        </button>
         <button onclick="closeStatsModal()" class="px-5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-neutral-950 font-black transition">
           關閉
         </button>
