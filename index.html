@@ -447,9 +447,14 @@
 
       <!-- 彈窗底部操作按鈕 -->
       <div class="p-3 border-t border-neutral-800 bg-neutral-900/90 flex justify-between items-center text-xs">
-        <button onclick="refreshStatsData()" class="px-3 py-1.5 rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold transition flex items-center space-x-1">
-          <span>🔄 重新整理</span>
-        </button>
+        <div class="flex items-center space-x-2">
+          <button onclick="refreshStatsData()" class="px-3 py-1.5 rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-bold transition flex items-center space-x-1">
+            <span>🔄 重新整理</span>
+          </button>
+          <button onclick="clearAllGameDatabase()" class="px-3 py-1.5 rounded-lg border border-rose-900 bg-rose-950/40 hover:bg-rose-900 text-rose-300 font-bold transition flex items-center space-x-1">
+            <span>🗑️ 清空資料庫</span>
+          </button>
+        </div>
         <button onclick="closeStatsModal()" class="px-5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-neutral-950 font-black transition">
           關閉
         </button>
@@ -556,6 +561,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       loadState();
       renderAll();
+      autoWipeDatabaseOnce();
     });
 
     function saveState() {
@@ -2445,11 +2451,24 @@
     // 強制自動上傳當局戰績 (無須確認、無須按鈕、無跳出彈窗)
     // 自動判定上傳機制：滿 30 分鐘以上強制上傳；未達 30 分鐘強制不上傳 (無須按鈕、無確認視窗)
     // 自動判定上傳機制：滿 30 分鐘以上強制上傳；未達 30 分鐘強制不上傳 (無須按鈕、無確認視窗)
-    // 自動靜默同步當局戰績至雲端與本機 (無按鈕、無彈窗)
+    // 有效對局判定條件：
+    // 1. 遊戲時間滿 30 分鐘以上 (elapsed >= MIN_GAME_DURATION_MINUTES)
+    // 2. 有達到終局計分面板 (G.step === 'gameover' 且 G.lastCalculatedResult 存在)
+    // 滿足條件才可列入資料庫；自動列入無須人工點擊確認
     async function autoUploadCurrentGameStats() {
-      if (G.currentGameUploaded || !G.lastCalculatedResult) return;
+      if (G.currentGameUploaded || !G.lastCalculatedResult || G.step !== 'gameover') return;
 
       const elapsed = getElapsedGameMinutes();
+
+      // 未達 30 分鐘：強制不列入資料庫
+      if (elapsed < MIN_GAME_DURATION_MINUTES) {
+        console.log(`未達有效對局標準：進行時間為 ${elapsed} 分鐘（需滿 30 分鐘），不列入資料庫。`);
+        G.currentGameUploaded = true;
+        saveState();
+        return;
+      }
+
+      // 滿 30 分鐘且達到終局計分：自動列入資料庫 (無須人工點擊確認)
       const now = new Date();
       const dateKey = now.toISOString().slice(0, 10);
       const timeStr = now.toLocaleTimeString("zh-TW", { hour12: false });
@@ -2459,7 +2478,7 @@
         dateKey: dateKey,
         formattedTime: timeStr,
         formattedDateTime: `${dateKey} ${timeStr}`,
-        durationMinutes: Math.max(1, elapsed),
+        durationMinutes: elapsed,
         playerCount: G.lastCalculatedResult.playerCount,
         totalScore: G.lastCalculatedResult.totalScore,
         winningCamp: G.lastCalculatedResult.winningCamp,
@@ -2478,7 +2497,7 @@
             ...gameDoc,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
-          console.log("戰績已自動同步至雲端 Firestore！");
+          console.log("有效對局 (滿30分且達終局) 已自動列入雲端 Firestore！");
         }
         let localGames = JSON.parse(localStorage.getItem(OFFLINE_STORAGE_KEY) || "[]");
         localGames.unshift(gameDoc);
@@ -2494,6 +2513,47 @@
         saveState();
       }
     }
+
+    // 依使用者要求：自動清空現有資料庫 (並提供一鍵清空功能)
+    const DB_AUTO_WIPE_KEY = 'gudong_db_wiped_v112_confirmed';
+
+    async function autoWipeDatabaseOnce() {
+      if (localStorage.getItem(DB_AUTO_WIPE_KEY)) return;
+      try {
+        if (isFirebaseReady && db) {
+          const snapshot = await db.collection(FIRESTORE_COLLECTION).get();
+          const batch = db.batch();
+          snapshot.forEach(doc => batch.delete(doc.ref));
+          await batch.commit();
+          console.log("已自動為您將 Firestore 現有資料庫完整清空！");
+        }
+        localStorage.removeItem(OFFLINE_STORAGE_KEY);
+        localStorage.setItem(DB_AUTO_WIPE_KEY, 'true');
+        console.log("本機快取資料庫亦已同步清空。");
+      } catch (e) {
+        console.warn("自動清空現有資料庫時發生異常:", e);
+      }
+    }
+
+    // 手動一鍵清空資料庫
+    async function clearAllGameDatabase() {
+      if (!confirm("⚠️ 警告：確定要清空雲端與本機的所有歷史戰績嗎？\n此操作無法復原！")) return;
+      try {
+        if (isFirebaseReady && db) {
+          const snapshot = await db.collection(FIRESTORE_COLLECTION).get();
+          const batch = db.batch();
+          snapshot.forEach(doc => batch.delete(doc.ref));
+          await batch.commit();
+        }
+        localStorage.removeItem(OFFLINE_STORAGE_KEY);
+        alert("✓ 現有資料庫已完全清空！");
+        await refreshStatsData();
+      } catch (err) {
+        console.error("清空失敗:", err);
+        alert("清空失敗，請確認網路連線。");
+      }
+    }
+
 
     async function fetchAllHistoryGames() {
       if (isFirebaseReady && db) {
@@ -2718,7 +2778,23 @@
     async function refreshStatsData() {
       const statusEl = document.getElementById('cloudSyncStatus');
       statusEl.innerText = "資料載入中...";
-      const { source, list: games } = await fetchAllHistoryGames();
+      const { source, list: rawGames } = await fetchAllHistoryGames();
+
+      // 嚴格資料清洗：
+      // 1. 自動過濾缺少玩家名單的測試或殘缺文檔 (如手動在後台建立的空文檔)
+      // 2. 避免重複上傳的記錄 (依 unique ID 或 timestamp)
+      const seenKeys = new Set();
+      const games = [];
+      (rawGames || []).forEach(g => {
+        if (!Array.isArray(g.players) || g.players.length === 0) return;
+        const uKey = g.id || g.timestamp || (g.formattedDateTime + '_' + g.totalScore);
+        if (!seenKeys.has(uKey)) {
+          seenKeys.add(uKey);
+          games.push(g);
+        }
+      });
+
+      currentLoadedGames = games;
       statusEl.innerText = `資料來源：${source}`;
 
       const total = games.length;
@@ -2755,7 +2831,11 @@
           if (p.role) roleMap[p.role] = p;
         });
 
+        // 單局內玩家防重複：避免同一局中若有兩人暱稱被歸納為同一別名時重複累加場次
+        const countedPlayersInThisGame = new Set();
+
         game.players.forEach(p => {
+          if (!p.name) return;
           const canonicalName = resolvePrimaryName(p.name);
           if (!pStats[canonicalName]) {
             pStats[canonicalName] = {
@@ -2770,8 +2850,11 @@
           }
 
           const u = pStats[canonicalName];
-          u.totalGames += 1;
-          if (p.isWinner) u.totalWins += 1;
+          if (!countedPlayersInThisGame.has(canonicalName)) {
+            countedPlayersInThisGame.add(canonicalName);
+            u.totalGames += 1;
+            if (p.isWinner) u.totalWins += 1;
+          }
 
           // 修改8: 角色是方震該玩家的查驗資訊不納入任何數據
           if (p.role !== '方震' && Array.isArray(p.inspectHistory)) {
@@ -3264,6 +3347,9 @@
       }).join('');
     }
 
+    let currentLoadedGames = [];
+    let currentlyExpandedMatchIndex = null;
+
     function renderHistoryMatchListTab(games) {
       // 標題已簡化
       const container = document.getElementById('historyMatchList');
@@ -3424,9 +3510,7 @@
       } else {
         currentlyExpandedMatchIndex = idx;
       }
-      fetchAllHistoryGames().then(res => {
-        renderHistoryMatchListTab(res.list);
-      });
+      renderHistoryMatchListTab(currentLoadedGames);
     }
 
     /* ============================================================
