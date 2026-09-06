@@ -329,27 +329,7 @@
 
         <!-- 雲端戰績與勝率統計卡片 (含 30 分鐘防洗數據機制提示) -->
         <!-- 雲端戰績自動同步狀態卡片 (強制自動上傳，無須確認與按鈕) -->
-        <!-- 雲端戰績狀態卡片 (已解除 30 分鐘限制，即時自動同步) -->
-        <div id="statsUploadCard" class="p-3.5 bg-neutral-950 border border-emerald-700/60 rounded-2xl mb-5 flex items-center justify-between shadow-lg">
-          <div class="flex items-center space-x-2.5 text-left">
-            <div id="uploadStatusIcon" class="w-8 h-8 rounded-full bg-emerald-950/80 border border-emerald-600/60 flex items-center justify-center text-emerald-400 text-base flex-shrink-0">
-              ☁️
-            </div>
-            <div>
-              <div id="uploadStatusTitle" class="text-xs font-black text-emerald-400">✓ 戰績已強制自動同步</div>
-              <div id="uploadStatusDesc" class="text-[10px] text-neutral-400">本局數據已無須確認即時記錄至資料庫並計入排行榜</div>
-            </div>
-          </div>
-          <button type="button" onclick="openStatsModal()" class="py-1.5 px-3 bg-neutral-900 hover:bg-neutral-800 text-amber-300 border border-neutral-700 font-bold text-xs rounded-xl transition flex items-center space-x-1 flex-shrink-0">
-            <span>📊 排行榜</span>
-          </button>
-        </div>
-            </div>
-          </div>
-          <button type="button" onclick="openStatsModal()" class="py-1.5 px-3 bg-neutral-900 hover:bg-neutral-800 text-amber-300 border border-neutral-700 font-bold text-xs rounded-xl transition flex items-center space-x-1 flex-shrink-0">
-            <span>📊 排行榜</span>
-          </button>
-        </div>
+        <!-- 雲端戰績狀態卡片 (滿 30 分鐘強制自動上傳，未達 30 分鐘強制不上傳) -->
 
         <div class="text-xs font-bold text-neutral-300 text-left mb-2">三回合投票保留之獸首真偽揭曉：</div>
         <div id="allRoundsSummary" class="space-y-2 mb-5 text-left text-xs"></div>
@@ -417,24 +397,6 @@
       <!-- 彈窗內容 -->
       <div class="flex-1 overflow-y-auto p-3.5 space-y-4">
         
-        <!-- 全局總覽看板 (總場次、好人勝率、壞人勝率) -->
-        <div class="grid grid-cols-3 gap-2 text-center">
-          <div class="p-2.5 bg-neutral-950 border border-neutral-800 rounded-xl">
-            <div class="text-[10px] text-neutral-400 font-bold">總記錄場次</div>
-            <div id="statTotalGames" class="text-xl sm:text-2xl font-black text-neutral-100 font-mono mt-1">0</div>
-          </div>
-          <div class="p-2.5 bg-blue-950/30 border border-blue-800/50 rounded-xl">
-            <div class="text-[10px] text-blue-400 font-bold">許願陣營勝率</div>
-            <div id="statGoodWinRate" class="text-xl sm:text-2xl font-black text-blue-400 font-mono mt-1">0%</div>
-            <div id="statGoodWinsCount" class="text-[9px] text-neutral-400 mt-0.5">0 場勝</div>
-          </div>
-          <div class="p-2.5 bg-rose-950/30 border border-rose-800/50 rounded-xl">
-            <div class="text-[10px] text-rose-400 font-bold">老朝奉陣營勝率</div>
-            <div id="statEvilWinRate" class="text-xl sm:text-2xl font-black text-rose-400 font-mono mt-1">0%</div>
-            <div id="statEvilWinsCount" class="text-[9px] text-neutral-400 mt-0.5">0 場勝</div>
-          </div>
-        </div>
-
         <!-- 頁籤 1：玩家勝率與角色細節 -->
         <div id="tabContentLeaderboard" class="space-y-3">
           <div class="flex justify-between items-center text-xs font-bold text-neutral-300">
@@ -455,7 +417,25 @@
         </div>
 
         <!-- 頁籤 3：歷史對局紀錄 (單一展開 Accordion) -->
+        <!-- 頁籤 3：歷史對局紀錄 (單一展開 Accordion) -->
         <div id="tabContentHistory" class="hidden space-y-3">
+          <!-- 總記錄場次與陣營勝率看板 (僅置於歷史對局分頁) -->
+          <div class="grid grid-cols-3 gap-2 text-center mb-3">
+            <div class="p-2.5 bg-neutral-950 border border-neutral-800 rounded-xl">
+              <div class="text-[10px] text-neutral-400 font-bold">總記錄場次</div>
+              <div id="statTotalGames" class="text-xl sm:text-2xl font-black text-neutral-100 font-mono mt-1">0</div>
+            </div>
+            <div class="p-2.5 bg-blue-950/30 border border-blue-800/50 rounded-xl">
+              <div class="text-[10px] text-blue-400 font-bold">許願陣營勝率</div>
+              <div id="statGoodWinRate" class="text-xl sm:text-2xl font-black text-blue-400 font-mono mt-1">0%</div>
+              <div id="statGoodWinsCount" class="text-[9px] text-neutral-400 mt-0.5">0 場勝</div>
+            </div>
+            <div class="p-2.5 bg-rose-950/30 border border-rose-800/50 rounded-xl">
+              <div class="text-[10px] text-rose-400 font-bold">老朝奉陣營勝率</div>
+              <div id="statEvilWinRate" class="text-xl sm:text-2xl font-black text-rose-400 font-mono mt-1">0%</div>
+              <div id="statEvilWinsCount" class="text-[9px] text-neutral-400 mt-0.5">0 場勝</div>
+            </div>
+          </div>
           <div class="text-xs font-bold text-neutral-300">
             歷史每場完整數據：
           </div>
@@ -517,7 +497,7 @@
        ============================================================ */
     const STORAGE_KEY = 'gudong_boardgame_rules_v26';
     const MASTER_PROFILES_KEY = 'gudong_master_profiles_v2';
-    const MIN_GAME_DURATION_MINUTES = 0; // 已解除 30 分鐘限制，即時自動同步
+    const MIN_GAME_DURATION_MINUTES = 30; // 滿 30 分鐘防洗數據門檻
 
     const COLOR_PALETTE = [
       { id: 'black',  name: '黑', bgClass: 'bg-black text-white border-neutral-600', dotClass: 'bg-black border-neutral-400', hex: '#000000' },
@@ -1051,6 +1031,10 @@
           recordStarterHistory(starter.colorId);
         }
         G.starterPlayerId = starter.id;
+        if (G.rounds && G.rounds[0]) G.rounds[0].starterPlayerId = starter.id;
+        if (G.actionLogs[starter.id] && G.actionLogs[starter.id].r1) {
+          G.actionLogs[starter.id].r1.isStarter = true;
+        }
         G.activePlayerId = starter.id;
         G.inspectedPlayerIds = [];
         G.inspectedBeastsInTurn = [];
@@ -1091,6 +1075,12 @@
       G.fangZhenClickCounts = {};
       G.fangZhenDistinctBeasts = {};
       G.fangZhenLockedMessage = null;
+      const rKeyCur = `r${G.currentRoundIdx + 1}`;
+      if (G.actionLogs[G.activePlayerId] && G.actionLogs[G.activePlayerId][rKeyCur]) {
+        if (G.starterPlayerId === G.activePlayerId) {
+          G.actionLogs[G.activePlayerId][rKeyCur].isStarter = true;
+        }
+      }
       saveState();
       renderAll();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1273,7 +1263,9 @@
         position: positionOrder || b.position || 1,
         displayText: displayText,
         actualIsReal: b.isReal,
-        isBlockedByZheng: isBlockedByZheng
+        isBlockedByZheng: isBlockedByZheng,
+        sawAmbush: isUnderAmbush,
+        isConfused: ((curP.role === "黃煙煙" || curP.role === "木戶加奈") && curP.confusedRound === G.currentRoundIdx)
       };
 
       G.inspectedBeastsInTurn.push({
@@ -1620,11 +1612,13 @@
       const curP = G.players.find(p => p.id === G.activePlayerId);
       G.abilityLockedInCurrentTurn = true;
 
+      const subIds = G.players.filter(p => !G.inspectedPlayerIds.includes(p.id) && p.id !== curP.id).map(p => p.id);
       const abilityItem = {
         round: G.currentRoundIdx + 1,
-        type: '鄭國渠封印',
+        type: "鄭國渠封印",
         blockedBeast: G.blockedBeastThisRound,
-        position: G.blockedBeastPositionThisRound
+        position: G.blockedBeastPositionThisRound,
+        subsequentPlayerIds: subIds
       };
       if (!curP.abilityHistory) curP.abilityHistory = [];
       curP.abilityHistory.push(abilityItem);
@@ -1768,7 +1762,7 @@
           confirmWrapper.classList.remove('hidden');
           confirmBtn.className = `px-8 py-3.5 rounded-xl font-black text-sm shadow-xl transition transform hover:scale-[1.02] border ${sc.bgClass}`;
           confirmBtn.innerHTML = `確認選擇此玩家（${getColorDisplayName(selectedPlayer.colorId)} ${selectedPlayer.name}） ➔`;
-          smoothScrollTo('stepCConfirmWrapper', 'center');
+          // 修改1: 移除點擊下一步自動下滑
         } else {
           confirmWrapper.classList.add('hidden');
         }
@@ -1784,7 +1778,7 @@
 
       const rKey = `r${G.currentRoundIdx + 1}`;
       if (G.actionLogs[curP.id] && G.actionLogs[curP.id][rKey]) {
-        G.actionLogs[curP.id][rKey].next = `指定下家：${ntc.name}色 ${nextP.name}`;
+        G.actionLogs[curP.id][rKey].next = `指定下家: ${ntc.name}色 ${nextP.name}`;
       }
 
       // 若當前角色是藥不然，記錄是否「偷襲目標直接指定為下家」
@@ -1971,6 +1965,13 @@
         G.currentRoundIdx++;
         const nextStarter = G.players.find(p => p.id === G.lastPlayerIdOfRound) || G.players[0];
         G.starterPlayerId = nextStarter.id;
+        if (G.rounds && G.rounds[G.currentRoundIdx]) {
+          G.rounds[G.currentRoundIdx].starterPlayerId = nextStarter.id;
+        }
+        const rKey = `r${G.currentRoundIdx + 1}`;
+        if (G.actionLogs[nextStarter.id] && G.actionLogs[nextStarter.id][rKey]) {
+          G.actionLogs[nextStarter.id][rKey].isStarter = true;
+        }
         G.activePlayerId = nextStarter.id;
         G.inspectedPlayerIds = [];
         G.inspectedBeastsInTurn = [];
@@ -2068,7 +2069,7 @@
         confirmWrapper.classList.remove('hidden');
         confirmBtn.className = `w-full py-3.5 rounded-xl font-black text-sm shadow-xl transition border ${chosenColor.bgClass}`;
         confirmBtn.innerHTML = `確認投給：${getColorDisplayName(chosenPlayer.colorId)} ${chosenPlayer.name} ➔`;
-        smoothScrollTo('pvConfirmWrapper', 'center');
+        // 修改2: 移除鑑人點選自動下滑
       } else {
         confirmWrapper.classList.add('hidden');
       }
@@ -2397,13 +2398,18 @@
         let roundsHtml = '';
         [1, 2, 3].forEach(rNum => {
           const rData = logs[`r${rNum}`] || { inspect:[], ability:'無操作', next:'未指定' };
+          const rObj = G.rounds.find(r => r.roundNum === rNum);
+          const isStarter = rData.isStarter || (rObj && rObj.starterPlayerId === p.id);
+          const starterBadge = isStarter ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-500 text-neutral-950 mr-1 shadow-sm">⭐首家</span>' : '';
           const inspectStr = rData.inspect.length > 0 ? rData.inspect.join('；') : '未查驗';
           roundsHtml += `
-            <div class="text-[11px] bg-neutral-950 p-2 rounded border border-neutral-800/60">
-              <span class="font-bold text-amber-400">第 ${rNum} 回合：</span>
+            <div class="text-[11px] bg-neutral-950 p-2 rounded border border-neutral-800/60 space-y-0.5">
+              <div class="flex items-center justify-between">
+                <div>${starterBadge}<span class="font-bold text-amber-400">第 ${rNum} 回合：</span></div>
+                <span class="text-amber-300 font-bold">${rData.next || '無紀錄'}</span>
+              </div>
               <div>• 查驗：${inspectStr}</div>
               <div>• 能力：${rData.ability || '無操作'}</div>
-              <div>• 順位：${rData.next || '無紀錄'}</div>
             </div>
           `;
         });
@@ -2439,23 +2445,12 @@
 
     // 強制自動上傳當局戰績 (無須確認、無須按鈕、無跳出彈窗)
     // 自動判定上傳機制：滿 30 分鐘以上強制上傳；未達 30 分鐘強制不上傳 (無須按鈕、無確認視窗)
-    // 強制自動上傳當局戰績 (已解除 30 分鐘限制，任何對局均即刻強制同步)
+    // 自動判定上傳機制：滿 30 分鐘以上強制上傳；未達 30 分鐘強制不上傳 (無須按鈕、無確認視窗)
+    // 自動靜默同步當局戰績至雲端與本機 (無按鈕、無彈窗)
     async function autoUploadCurrentGameStats() {
       if (G.currentGameUploaded || !G.lastCalculatedResult) return;
 
-      const titleEl = document.getElementById("uploadStatusTitle");
-      const descEl = document.getElementById("uploadStatusDesc");
-      const cardEl = document.getElementById("statsUploadCard");
-      const iconEl = document.getElementById("uploadStatusIcon");
-
       const elapsed = getElapsedGameMinutes();
-
-      if (titleEl) {
-        titleEl.className = "text-xs font-black text-emerald-400";
-        titleEl.innerText = "☁️ 戰績自動同步中...";
-      }
-      if (descEl) descEl.innerText = "正在將本局對局數據寫入資料庫...";
-
       const now = new Date();
       const dateKey = now.toISOString().slice(0, 10);
       const timeStr = now.toLocaleTimeString("zh-TW", { hour12: false });
@@ -2465,7 +2460,7 @@
         dateKey: dateKey,
         formattedTime: timeStr,
         formattedDateTime: `${dateKey} ${timeStr}`,
-        durationMinutes: elapsed,
+        durationMinutes: Math.max(1, elapsed),
         playerCount: G.lastCalculatedResult.playerCount,
         totalScore: G.lastCalculatedResult.totalScore,
         winningCamp: G.lastCalculatedResult.winningCamp,
@@ -2484,51 +2479,20 @@
             ...gameDoc,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
-          console.log("滿 30 分鐘，戰績已強制自動上傳至 Firestore！");
+          console.log("戰績已自動同步至雲端 Firestore！");
         }
-
         let localGames = JSON.parse(localStorage.getItem(OFFLINE_STORAGE_KEY) || "[]");
         localGames.unshift(gameDoc);
         localStorage.setItem(OFFLINE_STORAGE_KEY, JSON.stringify(localGames));
-
         G.currentGameUploaded = true;
         saveState();
-
-        if (cardEl) {
-          cardEl.className = "p-3.5 bg-neutral-950 border border-emerald-700/60 rounded-2xl mb-5 flex items-center justify-between shadow-lg";
-        }
-        if (iconEl) {
-          iconEl.className = "w-8 h-8 rounded-full bg-emerald-950/80 border border-emerald-600/60 flex items-center justify-center text-emerald-400 text-base flex-shrink-0";
-          iconEl.innerText = "☁️";
-        }
-        if (titleEl) {
-          titleEl.className = "text-xs font-black text-emerald-400";
-          titleEl.innerText = `✓ 戰績已強制自動同步`;
-        }
-        if (descEl) {
-          descEl.innerText = `本局共進行 ${elapsed} 分鐘，數據已即時記錄至資料庫並計入排行榜！`;
-        }
       } catch (err) {
-        console.error("自動上傳雲端異常，已自動存入本機備份:", err);
+        console.error("雲端同步異常，已存至本機備份:", err);
         let localGames = JSON.parse(localStorage.getItem(OFFLINE_STORAGE_KEY) || "[]");
         localGames.unshift(gameDoc);
         localStorage.setItem(OFFLINE_STORAGE_KEY, JSON.stringify(localGames));
-
         G.currentGameUploaded = true;
         saveState();
-
-        if (cardEl) {
-          cardEl.className = "p-3.5 bg-neutral-950 border border-emerald-700/60 rounded-2xl mb-5 flex items-center justify-between shadow-lg";
-        }
-        if (iconEl) {
-          iconEl.className = "w-8 h-8 rounded-full bg-emerald-950/80 border border-emerald-600/60 flex items-center justify-center text-emerald-400 text-base flex-shrink-0";
-          iconEl.innerText = "☁️";
-        }
-        if (titleEl) {
-          titleEl.className = "text-xs font-black text-emerald-400";
-          titleEl.innerText = `✓ 戰績已本機自動同步`;
-        }
-        if (descEl) descEl.innerText = "雲端暫時離線，本局數據已妥善保存至本機戰績庫";
       }
     }
 
@@ -2591,28 +2555,153 @@
     }
 
     /* ============================================================
-       玩家暱稱智慧歸一化 (相似拼音、大小寫、中英近義合併)
+       玩家暱稱智慧合併與動態主名演算法 (以歷史使用次數最多者為主名)
        ============================================================ */
-    function getNormalizedPlayerKey(rawName) {
-      if (!rawName) return "未知玩家";
-      let str = rawName.trim().toLowerCase();
-      // 移除多餘空格與常見符號
-      str = str.replace(/[\s\-_]+/g, '');
-      
-      // 常見別名映射表 (可自定義擴充)
-      const ALIAS_MAP = {
-        'andy': '宗彥',
-        'zongyan': '宗彥',
-        'tzungyan': '宗彥',
-        '李宗彥': '宗彥',
-        '彥': '宗彥',
-        'alex': '玩家1',
-        'bob': '玩家2'
-      };
+    const KNOWN_ALIAS_CLUSTERS = [
+      ['宗彥', '彥', 'YAN', '歪ㄟ恩', '李宗彥', 'ANDY', 'tzungyan', 'zongyan'],
+      ['菜', '小菜'],
+      ['小舅', '舅', 'JEO'],
+      ['嗩吶', '索娜', 'SONA', 'SUONA'],
+      ['山濤', '濤', '濤哥'],
+      ['蝦', '蝦子'],
+      ['RAY', '瑞'],
+      ['凡', 'FAN'],
+      ['小0', '小零', '小00', '零']
+    ];
 
-      if (ALIAS_MAP[str]) return ALIAS_MAP[str];
-      // 大小寫不分映射
-      return rawName.trim();
+    function cleanToken(s) {
+      if (!s) return '';
+      return s.trim().toLowerCase().replace(/[\s\-_]+/g, '');
+    }
+
+    // 取得詞幹 (去除前綴 小/大/阿/老 及後綴 哥/姐/弟/妹/子/兒)
+    function extractBaseRoot(s) {
+      if (!s) return '';
+      let str = s.trim();
+      const prefixes = ['小', '大', '阿', '老'];
+      const suffixes = ['哥', '姐', '弟', '妹', '兒', '子'];
+      for (let p of prefixes) {
+        if (str.startsWith(p) && str.length > 1) {
+          str = str.slice(p.length);
+          break;
+        }
+      }
+      for (let suf of suffixes) {
+        if (str.endsWith(suf) && str.length > 1) {
+          str = str.slice(0, -suf.length);
+          break;
+        }
+      }
+      return str.trim();
+    }
+
+    // 動態建構所有玩家的叢集映射，並以「使用次數最多者」作為主名
+    function buildPlayerClusterMapping(games) {
+      const nameFreq = {};
+      games.forEach(g => {
+        if (!Array.isArray(g.players)) return;
+        g.players.forEach(p => {
+          if (!p.name) return;
+          const trimmed = p.name.trim();
+          nameFreq[trimmed] = (nameFreq[trimmed] || 0) + 1;
+        });
+      });
+
+      const uniqueNames = Object.keys(nameFreq);
+      const clusters = [];
+
+      // 初始化已知別名組
+      KNOWN_ALIAS_CLUSTERS.forEach(group => {
+        clusters.push(new Set(group));
+      });
+
+      // 自動歸納新暱稱
+      uniqueNames.forEach(rawName => {
+        const token = cleanToken(rawName);
+        const root = extractBaseRoot(rawName);
+
+        let matchedCluster = null;
+        for (let cluster of clusters) {
+          // 精確或大小寫拼音符合
+          for (let member of cluster) {
+            if (cleanToken(member) === token) {
+              matchedCluster = cluster;
+              break;
+            }
+          }
+          if (matchedCluster) break;
+
+          // 詞幹符合 (例如 菜 vs 小菜, 蝦 vs 蝦子)
+          if (root && root.length >= 1) {
+            for (let member of cluster) {
+              const mRoot = extractBaseRoot(member);
+              if (mRoot && mRoot.toLowerCase() === root.toLowerCase()) {
+                matchedCluster = cluster;
+                break;
+              }
+            }
+          }
+          if (matchedCluster) break;
+        }
+
+        if (matchedCluster) {
+          matchedCluster.add(rawName);
+        } else {
+          // 檢查是否與尚未成組的其他人擁有相同詞幹
+          let merged = false;
+          for (let cluster of clusters) {
+            for (let member of cluster) {
+              const mRoot = extractBaseRoot(member);
+              if (root && mRoot && root.toLowerCase() === mRoot.toLowerCase()) {
+                cluster.add(rawName);
+                merged = true;
+                break;
+              }
+            }
+            if (merged) break;
+          }
+          if (!merged) {
+            clusters.push(new Set([rawName]));
+          }
+        }
+      });
+
+      // 找出每個 cluster 中「使用次數最多者」作為排行榜主名
+      const nameToPrimary = {};
+      clusters.forEach(cluster => {
+        let maxCount = -1;
+        let bestPrimary = null;
+
+        cluster.forEach(name => {
+          const count = nameFreq[name] || 0;
+          if (count > maxCount) {
+            maxCount = count;
+            bestPrimary = name;
+          } else if (count === maxCount && count > 0) {
+            if (bestPrimary && name.length > bestPrimary.length) {
+              bestPrimary = name;
+            }
+          }
+        });
+
+        if (!bestPrimary) {
+          bestPrimary = Array.from(cluster)[0];
+        }
+
+        cluster.forEach(name => {
+          nameToPrimary[name] = bestPrimary;
+          nameToPrimary[cleanToken(name)] = bestPrimary;
+        });
+      });
+
+      return function resolvePrimaryName(rawName) {
+        if (!rawName) return "未知玩家";
+        const trimmed = rawName.trim();
+        if (nameToPrimary[trimmed]) return nameToPrimary[trimmed];
+        const token = cleanToken(trimmed);
+        if (nameToPrimary[token]) return nameToPrimary[token];
+        return trimmed;
+      };
     }
 
     async function refreshStatsData() {
@@ -2644,19 +2733,19 @@
     }
 
     function renderPlayersAndRolesTab(games) {
+      const resolvePrimaryName = buildPlayerClusterMapping(games);
       const pStats = {};
 
       games.forEach(game => {
         if (!Array.isArray(game.players)) return;
 
-        // 建立本局角色快速查詢表
         const roleMap = {};
         game.players.forEach(p => {
           if (p.role) roleMap[p.role] = p;
         });
 
         game.players.forEach(p => {
-          const canonicalName = getNormalizedPlayerKey(p.name);
+          const canonicalName = resolvePrimaryName(p.name);
           if (!pStats[canonicalName]) {
             pStats[canonicalName] = {
               displayName: canonicalName,
@@ -2665,7 +2754,7 @@
               totalWins: 0,
               inspectPositions: { 1: 0, 2: 0, 3: 0, 4: 0 },
               totalInspects: 0,
-              roles: {} // { [roleName]: { games, wins, ...specifics } }
+              roles: {}
             };
           }
 
@@ -2673,8 +2762,8 @@
           u.totalGames += 1;
           if (p.isWinner) u.totalWins += 1;
 
-          // 統計該玩家查驗獸首位次 (1~4)
-          if (Array.isArray(p.inspectHistory)) {
+          // 修改8: 角色是方震該玩家的查驗資訊不納入任何數據
+          if (p.role !== '方震' && Array.isArray(p.inspectHistory)) {
             p.inspectHistory.forEach(ins => {
               const pos = ins.position || 1;
               u.inspectPositions[pos] = (u.inspectPositions[pos] || 0) + 1;
@@ -2682,14 +2771,12 @@
             });
           }
 
-          // 初始化該角色統計物件
           const rName = p.role;
           if (!u.roles[rName]) {
             u.roles[rName] = {
               roleName: rName,
               games: 0,
               wins: 0,
-              // 各角色專屬指標累計
               data: {}
             };
           }
@@ -2700,11 +2787,9 @@
           // ---------------- a. 許願 ----------------
           if (rName === '許願') {
             const d = rStat.data;
-            // 1. 不被老朝奉找到
             if (!d.notCaughtCount) d.notCaughtCount = 0;
             if (game.xuCaughtByLao === false) d.notCaughtCount += 1;
 
-            // 2. 查驗查到雙真或雙贋品 (許願一次查2件)
             if (!d.doubleRealOrFakeCount) d.doubleRealOrFakeCount = 0;
             if (!d.totalInspectRounds) d.totalInspectRounds = 0;
             if (Array.isArray(p.inspectHistory) && p.inspectHistory.length >= 2) {
@@ -2714,11 +2799,9 @@
               if (r1 === r2) d.doubleRealOrFakeCount += 1;
             }
 
-            // 3. 投到老朝奉
             if (!d.votedLaoCount) d.votedLaoCount = 0;
             if (p.personVoteTarget && p.personVoteTarget.targetRole === '老朝奉') d.votedLaoCount += 1;
 
-            // 4. 被誤認為方震 (藥不然投給了許願)
             if (!d.mistakenAsFangCount) d.mistakenAsFangCount = 0;
             const yaoPlayer = roleMap['藥不然'];
             if (yaoPlayer && yaoPlayer.personVoteTarget && yaoPlayer.personVoteTarget.targetRole === '許願') {
@@ -2729,20 +2812,16 @@
           // ---------------- b. 方震 ----------------
           else if (rName === '方震') {
             const d = rStat.data;
-            // 1. 不被藥不然找到
             if (!d.notCaughtCount) d.notCaughtCount = 0;
             if (game.fangCaughtByYao === false) d.notCaughtCount += 1;
 
-            // 2. 每局查驗到2位以上老朝奉陣營玩家
             if (!d.checkedTwoEvilsCount) d.checkedTwoEvilsCount = 0;
             const evilCheckCount = (p.abilityHistory || []).filter(ab => ab.isEvil).length;
             if (evilCheckCount >= 2) d.checkedTwoEvilsCount += 1;
 
-            // 3. 投到老朝奉
             if (!d.votedLaoCount) d.votedLaoCount = 0;
             if (p.personVoteTarget && p.personVoteTarget.targetRole === '老朝奉') d.votedLaoCount += 1;
 
-            // 4. 被誤認為許願 (老朝奉投了方震)
             if (!d.mistakenAsXuCount) d.mistakenAsXuCount = 0;
             const laoPlayer = roleMap['老朝奉'];
             if (laoPlayer && laoPlayer.personVoteTarget && laoPlayer.personVoteTarget.targetRole === '方震') {
@@ -2753,33 +2832,26 @@
           // ---------------- c. 姬雲浮 ----------------
           else if (rName === '姬雲浮') {
             const d = rStat.data;
-            // 1. 每局查驗到2個真品
             if (!d.checkedTwoRealCount) d.checkedTwoRealCount = 0;
             const realInspectCount = (p.inspectHistory || []).filter(ins => ins.actualIsReal === true).length;
             if (realInspectCount >= 2) d.checkedTwoRealCount += 1;
 
-            // 2. 整場不被偷襲
+            // 修改10: 只有畫面實際出現被偷襲才算
             if (!d.neverAmbushedCount) d.neverAmbushedCount = 0;
-            const yaoPlayer = roleMap['藥不然'];
-            let ambushedJi = false;
-            if (yaoPlayer && Array.isArray(yaoPlayer.abilityHistory)) {
-              ambushedJi = yaoPlayer.abilityHistory.some(ab => ab.targetRole === '姬雲浮');
-            }
-            if (!ambushedJi) d.neverAmbushedCount += 1;
+            const actuallySawAmbush = (p.inspectHistory || []).some(ins => ins.sawAmbush);
+            if (!actuallySawAmbush) d.neverAmbushedCount += 1;
 
-            // 3. 投到老朝奉
             if (!d.votedLaoCount) d.votedLaoCount = 0;
             if (p.personVoteTarget && p.personVoteTarget.targetRole === '老朝奉') d.votedLaoCount += 1;
 
-            // 4. 被誤認為許願 (老朝奉投了姬雲浮)
             if (!d.mistakenAsXuCount) d.mistakenAsXuCount = 0;
             const laoPlayer = roleMap['老朝奉'];
             if (laoPlayer && laoPlayer.personVoteTarget && laoPlayer.personVoteTarget.targetRole === '姬雲浮') {
               d.mistakenAsXuCount += 1;
             }
 
-            // 5. 被誤認為方震 (藥不然投了姬雲浮)
             if (!d.mistakenAsFangCount) d.mistakenAsFangCount = 0;
+            const yaoPlayer = roleMap['藥不然'];
             if (yaoPlayer && yaoPlayer.personVoteTarget && yaoPlayer.personVoteTarget.targetRole === '姬雲浮') {
               d.mistakenAsFangCount += 1;
             }
@@ -2791,8 +2863,9 @@
             if (!d.blockedPositions) d.blockedPositions = { 1: 0, 2: 0, 3: 0, 4: 0 };
             if (!d.totalBlockAttempts) d.totalBlockAttempts = 0;
             if (!d.skipBlockCount) d.skipBlockCount = 0;
-            if (!d.blockedBeastHitCount) d.blockedBeastHitCount = 0;
+            if (!d.blockTurnRates) d.blockTurnRates = [];
 
+            // 修改11: 鄭國渠每一次開技能獨立計算
             if (Array.isArray(p.abilityHistory)) {
               p.abilityHistory.forEach(ab => {
                 d.totalBlockAttempts += 1;
@@ -2800,48 +2873,68 @@
                   d.skipBlockCount += 1;
                 } else {
                   if (ab.position) d.blockedPositions[ab.position] = (d.blockedPositions[ab.position] || 0) + 1;
-                  // 檢查該封鎖獸首是否被後續玩家查驗到
-                  const wasCheckedByOthers = game.players.some(otherP => {
-                    return (otherP.inspectHistory || []).some(ins => ins.beastName === ab.blockedBeast && ins.isBlockedByZheng);
+
+                  const subIds = ab.subsequentPlayerIds || [];
+                  const subPlayers = game.players.filter(x => subIds.includes(x.id));
+
+                  // 排除：方震、被偷襲不能驗者、平民被系統封印(困惑)者
+                  const eligibleInspectors = subPlayers.filter(x => {
+                    if (x.role === '方震') return false;
+                    const insInRound = (x.inspectHistory || []).find(ins => ins.round === ab.round);
+                    if (!insInRound) return false;
+                    if (insInRound.sawAmbush) return false;
+                    if (insInRound.isConfused) return false;
+                    return true;
                   });
-                  if (wasCheckedByOthers) d.blockedBeastHitCount += 1;
+
+                  if (eligibleInspectors.length > 0) {
+                    const hitCount = eligibleInspectors.filter(x => {
+                      return (x.inspectHistory || []).some(ins => ins.round === ab.round && ins.beastName === ab.blockedBeast && ins.isBlockedByZheng);
+                    }).length;
+
+                    const singleTurnRate = hitCount / eligibleInspectors.length;
+                    d.blockTurnRates.push(singleTurnRate);
+                  }
                 }
               });
             }
 
-            // 被藥不然偷襲
+            // 修改10: 被藥不然偷襲以畫面實際出現才算
             if (!d.ambushedByYaoCount) d.ambushedByYaoCount = 0;
-            const yaoPlayer = roleMap['藥不然'];
-            if (yaoPlayer && Array.isArray(yaoPlayer.abilityHistory)) {
-              if (yaoPlayer.abilityHistory.some(ab => ab.targetRole === '鄭國渠')) d.ambushedByYaoCount += 1;
-            }
+            const zhengSawAmbush = (p.inspectHistory || []).some(ins => ins.sawAmbush);
+            if (zhengSawAmbush) d.ambushedByYaoCount += 1;
           }
 
           // ---------------- e. 藥不然 ----------------
           else if (rName === '藥不然') {
             const d = rStat.data;
-            // 1. 找到方震
             if (!d.foundFangCount) d.foundFangCount = 0;
             if (p.personVoteTarget && p.personVoteTarget.targetRole === '方震') d.foundFangCount += 1;
 
-            // 偷襲相關
             if (!d.totalAmbushAttempts) d.totalAmbushAttempts = 0;
             if (!d.skipAmbushCount) d.skipAmbushCount = 0;
             if (!d.ambushTeammateCount) d.ambushTeammateCount = 0;
             if (!d.ambushFangCount) d.ambushFangCount = 0;
             if (!d.ambushJiCount) d.ambushJiCount = 0;
             if (!d.passedToTargetCount) d.passedToTargetCount = 0;
+            if (!d.effectiveAmbushCount) d.effectiveAmbushCount = 0;
 
+            // 修改10: 只有目標實際在畫面看到被偷襲才算
             if (Array.isArray(p.abilityHistory)) {
               p.abilityHistory.forEach(ab => {
                 d.totalAmbushAttempts += 1;
                 if (ab.isSkipped) {
                   d.skipAmbushCount += 1;
                 } else {
-                  if (['老朝奉', '鄭國渠'].includes(ab.targetRole)) d.ambushTeammateCount += 1;
-                  if (ab.targetRole === '方震') d.ambushFangCount += 1;
-                  if (ab.targetRole === '姬雲浮') d.ambushJiCount += 1;
-                  if (ab.passedToTarget) d.passedToTargetCount += 1;
+                  const targetObj = game.players.find(x => x.id === ab.targetId);
+                  const targetSaw = targetObj && (targetObj.inspectHistory || []).some(ins => ins.round === ab.round && ins.sawAmbush);
+                  if (targetSaw) {
+                    d.effectiveAmbushCount += 1;
+                    if (['老朝奉', '鄭國渠'].includes(ab.targetRole)) d.ambushTeammateCount += 1;
+                    if (ab.targetRole === '方震') d.ambushFangCount += 1;
+                    if (ab.targetRole === '姬雲浮') d.ambushJiCount += 1;
+                    if (ab.passedToTarget) d.passedToTargetCount += 1;
+                  }
                 }
               });
             }
@@ -2850,11 +2943,9 @@
           // ---------------- f. 老朝奉 ----------------
           else if (rName === '老朝奉') {
             const d = rStat.data;
-            // 1. 找到許願
             if (!d.foundXuCount) d.foundXuCount = 0;
             if (p.personVoteTarget && p.personVoteTarget.targetRole === '許願') d.foundXuCount += 1;
 
-            // 2. 開啟擾亂與整局不開
             if (!d.totalDisruptRounds) d.totalDisruptRounds = 0;
             if (!d.activeDisruptCount) d.activeDisruptCount = 0;
             if (!d.neverDisruptWholeGameCount) d.neverDisruptWholeGameCount = 0;
@@ -2871,7 +2962,6 @@
             }
             if (!openedAnyDisrupt) d.neverDisruptWholeGameCount += 1;
 
-            // 3. 每局不被好人投票 (躲藏成功)
             if (!d.escapedGoodVotesCount) d.escapedGoodVotesCount = 0;
             if (game.laoCaughtByGood === false) d.escapedGoodVotesCount += 1;
           }
@@ -2879,31 +2969,27 @@
           // ---------------- g. 木戶加奈 & 黃煙煙 ----------------
           else if (['木戶加奈', '黃煙煙'].includes(rName)) {
             const d = rStat.data;
-            // 1. 找到老朝奉
             if (!d.foundLaoCount) d.foundLaoCount = 0;
             if (p.personVoteTarget && p.personVoteTarget.targetRole === '老朝奉') d.foundLaoCount += 1;
 
-            // 2. 被誤認為許願 (老朝奉投了該人)
             if (!d.mistakenAsXuCount) d.mistakenAsXuCount = 0;
             const laoPlayer = roleMap['老朝奉'];
             if (laoPlayer && laoPlayer.personVoteTarget && laoPlayer.personVoteTarget.targetRole === rName) {
               d.mistakenAsXuCount += 1;
             }
 
-            // 3. 被誤認為方震 (藥不然投了該人)
             if (!d.mistakenAsFangCount) d.mistakenAsFangCount = 0;
             const yaoPlayer = roleMap['藥不然'];
             if (yaoPlayer && yaoPlayer.personVoteTarget && yaoPlayer.personVoteTarget.targetRole === rName) {
               d.mistakenAsFangCount += 1;
             }
 
-            // 4. 整局都驗不到獸首 (全被封印或困惑/偷襲)
             if (!d.zeroInspectGameCount) d.zeroInspectGameCount = 0;
             let successInspects = 0;
             if (Array.isArray(p.inspectHistory)) {
               successInspects = p.inspectHistory.filter(ins => {
                 const txt = ins.displayText || '';
-                return txt.includes('真品') || txt.includes('贗品');
+                return (txt.includes('真品') || txt.includes('贗品')) && !ins.isBlockedByZheng && !ins.sawAmbush;
               }).length;
             }
             if (successInspects === 0) d.zeroInspectGameCount += 1;
@@ -2915,15 +3001,15 @@
       const playerList = Object.values(pStats).map(p => {
         const winRateNum = p.totalGames > 0 ? (p.totalWins / p.totalGames) * 100 : 0;
         
-        // 獸首位次喜好排名 (1~4)
+        // 修改9: 查驗喜好縮短成 1>2>3>4 格式
         const posSorted = Object.entries(p.inspectPositions).sort((a, b) => b[1] - a[1]);
-        const favPosStr = posSorted.map((item, idx) => `第${item[0]}位(${item[1]}次)`).join(' > ');
+        const favPosCompact = p.totalInspects > 0 ? posSorted.map(item => item[0]).join('>') : '1>2>3>4';
 
         return {
           ...p,
           winRateNum,
           winRateStr: winRateNum.toFixed(1) + '%',
-          favPosStr
+          favPosCompact
         };
       }).sort((a, b) => b.totalWins - a.totalWins || b.winRateNum - a.winRateNum);
 
@@ -2935,12 +3021,11 @@
 
       container.innerHTML = playerList.map((player, pIdx) => {
         const pc = COLOR_PALETTE.find(c => c.id === player.colorId) || COLOR_PALETTE[0];
-        let medal = `<span class="w-6 h-6 rounded-full bg-neutral-800 text-neutral-400 font-black text-xs inline-flex items-center justify-center">${pIdx + 1}</span>`;
-        if (pIdx === 0) medal = `<span class="w-6 h-6 rounded-full bg-amber-500 text-neutral-950 font-black text-xs inline-flex items-center justify-center shadow">🥇</span>`;
-        if (pIdx === 1) medal = `<span class="w-6 h-6 rounded-full bg-slate-300 text-neutral-950 font-black text-xs inline-flex items-center justify-center shadow">🥈</span>`;
-        if (pIdx === 2) medal = `<span class="w-6 h-6 rounded-full bg-amber-700 text-white font-black text-xs inline-flex items-center justify-center shadow">🥉</span>`;
+        let medal = `<span class="w-6 h-6 rounded-full bg-neutral-800 text-neutral-400 font-black text-xs inline-flex items-center justify-center flex-shrink-0">${pIdx + 1}</span>`;
+        if (pIdx === 0) medal = `<span class="w-6 h-6 rounded-full bg-amber-500 text-neutral-950 font-black text-xs inline-flex items-center justify-center shadow flex-shrink-0">🥇</span>`;
+        if (pIdx === 1) medal = `<span class="w-6 h-6 rounded-full bg-slate-300 text-neutral-950 font-black text-xs inline-flex items-center justify-center shadow flex-shrink-0">🥈</span>`;
+        if (pIdx === 2) medal = `<span class="w-6 h-6 rounded-full bg-amber-700 text-white font-black text-xs inline-flex items-center justify-center shadow flex-shrink-0">🥉</span>`;
 
-        // 渲染每個角色的細節卡片
         const roleCardsHtml = Object.values(player.roles).map(r => {
           const rWinRate = r.games > 0 ? ((r.wins / r.games) * 100).toFixed(1) + '%' : '0%';
           const d = r.data || {};
@@ -2964,10 +3049,11 @@
             const checked2EvilsRate = r.games > 0 ? (((d.checkedTwoEvilsCount || 0) / r.games) * 100).toFixed(1) + '%' : '0%';
             const voteLaoRate = r.games > 0 ? (((d.votedLaoCount || 0) / r.games) * 100).toFixed(1) + '%' : '0%';
             const misXuRate = r.games > 0 ? (((d.mistakenAsXuCount || 0) / r.games) * 100).toFixed(1) + '%' : '0%';
+            // 修改9: 查驗2位以上壞人
             detailsHtml = `
               <div class="grid grid-cols-2 gap-1.5 text-[11px] text-neutral-300 pt-1">
                 <div>• 不被藥不然找到：<b class="text-emerald-400 font-mono">${notCaughtRate}</b></div>
-                <div>• 查驗≥2位老朝奉陣營：<b class="text-amber-300 font-mono">${checked2EvilsRate}</b></div>
+                <div>• 查驗2位以上壞人：<b class="text-amber-300 font-mono">${checked2EvilsRate}</b></div>
                 <div>• 投中老朝奉機率：<b class="text-blue-400 font-mono">${voteLaoRate}</b></div>
                 <div>• 被誤認為許願：<b class="text-rose-400 font-mono">${misXuRate}</b></div>
               </div>
@@ -2988,26 +3074,29 @@
               </div>
             `;
           } else if (r.roleName === '鄭國渠') {
-            const blockHitRate = (d.totalBlockAttempts - (d.skipBlockCount || 0)) > 0 ? (((d.blockedBeastHitCount || 0) / (d.totalBlockAttempts - (d.skipBlockCount || 0))) * 100).toFixed(1) + '%' : '0%';
+            // 修改11: 獨立計算每一次開技能命中率
+            const blockHitRate = (d.blockTurnRates && d.blockTurnRates.length > 0) 
+              ? ((d.blockTurnRates.reduce((acc, cur) => acc + cur, 0) / d.blockTurnRates.length) * 100).toFixed(1) + '%' 
+              : '0%';
             const skipRate = (d.totalBlockAttempts || 0) > 0 ? (((d.skipBlockCount || 0) / d.totalBlockAttempts) * 100).toFixed(1) + '%' : '0%';
             const ambushedByYaoRate = r.games > 0 ? (((d.ambushedByYaoCount || 0) / r.games) * 100).toFixed(1) + '%' : '0%';
             const blockPosSort = Object.entries(d.blockedPositions || {}).sort((a, b) => b[1] - a[1]);
-            const blockPosRankingStr = blockPosSort.map(x => `第${x[0]}位(${x[1]}次)`).join(' > ');
+            const blockPosRankingStr = blockPosSort.map(x => x[0]).join('>');
             detailsHtml = `
               <div class="grid grid-cols-2 gap-1.5 text-[11px] text-neutral-300 pt-1">
                 <div>• 封印被後續查到率：<b class="text-emerald-400 font-mono">${blockHitRate}</b></div>
                 <div>• 不想封印機率：<b class="text-neutral-400 font-mono">${skipRate}</b></div>
                 <div>• 被藥不然偷襲率：<b class="text-rose-400 font-mono">${ambushedByYaoRate}</b></div>
-                <div class="col-span-2 text-[10px] text-amber-300">• 喜歡封印獸首順序：${blockPosRankingStr || '無'}</div>
+                <div class="col-span-2 text-[10px] text-amber-300">• 喜歡封印順序：${blockPosRankingStr || '1>2>3>4'}</div>
               </div>
             `;
           } else if (r.roleName === '藥不然') {
             const foundFangRate = r.games > 0 ? (((d.foundFangCount || 0) / r.games) * 100).toFixed(1) + '%' : '0%';
-            const activeAmbushes = (d.totalAmbushAttempts || 0) - (d.skipAmbushCount || 0);
-            const teamRate = activeAmbushes > 0 ? (((d.ambushTeammateCount || 0) / activeAmbushes) * 100).toFixed(1) + '%' : '0%';
-            const fangRate = activeAmbushes > 0 ? (((d.ambushFangCount || 0) / activeAmbushes) * 100).toFixed(1) + '%' : '0%';
-            const jiRate = activeAmbushes > 0 ? (((d.ambushJiCount || 0) / activeAmbushes) * 100).toFixed(1) + '%' : '0%';
-            const passRate = activeAmbushes > 0 ? (((d.passedToTargetCount || 0) / activeAmbushes) * 100).toFixed(1) + '%' : '0%';
+            const effAmbushes = d.effectiveAmbushCount || 0;
+            const teamRate = effAmbushes > 0 ? (((d.ambushTeammateCount || 0) / effAmbushes) * 100).toFixed(1) + '%' : '0%';
+            const fangRate = effAmbushes > 0 ? (((d.ambushFangCount || 0) / effAmbushes) * 100).toFixed(1) + '%' : '0%';
+            const jiRate = effAmbushes > 0 ? (((d.ambushJiCount || 0) / effAmbushes) * 100).toFixed(1) + '%' : '0%';
+            const passRate = effAmbushes > 0 ? (((d.passedToTargetCount || 0) / effAmbushes) * 100).toFixed(1) + '%' : '0%';
             const skipRate = (d.totalAmbushAttempts || 0) > 0 ? (((d.skipAmbushCount || 0) / d.totalAmbushAttempts) * 100).toFixed(1) + '%' : '0%';
             detailsHtml = `
               <div class="grid grid-cols-2 gap-1.5 text-[11px] text-neutral-300 pt-1">
@@ -3058,32 +3147,30 @@
           `;
         }).join('');
 
+        // 修改9: 查驗喜好修短為「查驗喜好:1>2>3>4」，讓右側勝敗場與勝率空間更充裕
         return `
           <div class="p-3 bg-neutral-950 border border-neutral-800 rounded-xl space-y-2.5">
             <div class="flex items-center justify-between cursor-pointer" onclick="togglePlayerRoleDetails(${pIdx})">
-              <div class="flex items-center space-x-2.5">
+              <div class="flex items-center space-x-2.5 flex-1 min-w-0 mr-2">
                 ${medal}
-                <div>
-                  <div class="flex items-center space-x-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full ${pc.dotClass} border inline-block"></span>
-                    <span class="font-black text-base text-neutral-100">${player.displayName}</span>
+                <div class="min-w-0">
+                  <div class="flex items-center space-x-1.5 truncate">
+                    <span class="w-2.5 h-2.5 rounded-full ${pc.dotClass} border inline-block flex-shrink-0"></span>
+                    <span class="font-black text-base text-neutral-100 truncate">${player.displayName}</span>
                   </div>
-                  <div class="text-[10px] text-neutral-400 mt-0.5">
-                    喜好查驗第_位獸首排名：<span class="text-amber-400 font-mono">${player.favPosStr || '尚無數據'}</span>
+                  <div class="text-[10px] text-neutral-400 mt-0.5 truncate">
+                    查驗喜好: <span class="text-amber-400 font-mono font-bold">${player.favPosCompact}</span>
                   </div>
                 </div>
               </div>
-              <div class="text-right">
+              <div class="text-right flex-shrink-0">
                 <div class="text-base font-black text-emerald-400 font-mono">${player.winRateStr}</div>
-                <div class="text-[10px] text-neutral-400 font-mono">${player.totalWins} 勝 / ${player.totalGames} 場</div>
+                <div class="text-[11px] text-neutral-400 font-mono">${player.totalWins}勝 / ${player.totalGames}場</div>
               </div>
             </div>
 
-            <!-- 可展開的角色細部數據清單 -->
             <div id="playerRoleDetailBox_${pIdx}" class="hidden space-y-2 pt-2 border-t border-neutral-800/80">
-              <div class="text-[11px] font-bold text-amber-400 flex items-center">
-                <span>各角色進階勝率與作戰指標：</span>
-              </div>
+              <div class="text-[11px] font-bold text-amber-400">各角色進階勝率與作戰指標：</div>
               <div class="space-y-2">${roleCardsHtml}</div>
             </div>
           </div>
@@ -3096,9 +3183,7 @@
       if (box) box.classList.toggle('hidden');
     }
 
-    /* ============================================================
-       十二生肖獸首獨立數據庫 (真品率、被查驗率)
-       ============================================================ */
+    // 修改4 & 5 & 8: 獸首被查驗機率排除方震、僅保留純機率、不顯示出場次數
     function renderBeastsDatabaseTab(games) {
       const beastStats = {};
       ZODIAC_ORDER.forEach(name => {
@@ -3106,44 +3191,48 @@
           name: name,
           appearedCount: 0,
           realCount: 0,
-          fakeCount: 0,
-          inspectedCount: 0
+          eligibleInspectors: 0, // 分母：該獸首出現輪次中，非方震查驗玩家總數
+          clickedInspectors: 0    // 分子：點擊該獸首的非方震玩家人數
         };
       });
 
       games.forEach(g => {
         if (!Array.isArray(g.rounds)) return;
+
         g.rounds.forEach(r => {
           if (!Array.isArray(r.beasts)) return;
+
+          // 該輪非方震的查驗玩家清單
+          const nonFangZhenInspectorsInRound = (g.players || []).filter(p => {
+            if (p.role === '方震') return false;
+            return (p.inspectHistory || []).some(ins => ins.round === r.roundNum);
+          });
+          const eligibleCountInRound = nonFangZhenInspectorsInRound.length;
+
           r.beasts.forEach(b => {
-            if (beastStats[b.name]) {
-              beastStats[b.name].appearedCount += 1;
-              if (b.isReal) beastStats[b.name].realCount += 1;
-              else beastStats[b.name].fakeCount += 1;
-            }
+            if (!beastStats[b.name]) return;
+            beastStats[b.name].appearedCount += 1;
+            if (b.isReal) beastStats[b.name].realCount += 1;
+
+            // 累計非方震查驗分母
+            beastStats[b.name].eligibleInspectors += eligibleCountInRound;
+
+            // 計算本輪點擊此獸首的非方震人數 (分子)
+            const clickedCount = nonFangZhenInspectorsInRound.filter(p => {
+              return (p.inspectHistory || []).some(ins => ins.round === r.roundNum && ins.beastName === b.name);
+            }).length;
+            beastStats[b.name].clickedInspectors += clickedCount;
           });
         });
-
-        // 統計被查驗次數
-        if (Array.isArray(g.players)) {
-          g.players.forEach(p => {
-            if (Array.isArray(p.inspectHistory)) {
-              p.inspectHistory.forEach(ins => {
-                if (beastStats[ins.beastName]) {
-                  beastStats[ins.beastName].inspectedCount += 1;
-                }
-              });
-            }
-          });
-        }
       });
 
       const container = document.getElementById('beastsStatsList');
       container.innerHTML = ZODIAC_ORDER.map(name => {
         const item = beastStats[name];
         const realRate = item.appearedCount > 0 ? ((item.realCount / item.appearedCount) * 100).toFixed(1) + '%' : '0%';
-        const inspectRate = item.appearedCount > 0 ? ((item.inspectedCount / item.appearedCount) * 100).toFixed(1) + '%' : '0%';
+        const inspectRate = item.eligibleInspectors > 0 ? ((item.clickedInspectors / item.eligibleInspectors) * 100).toFixed(1) + '%' : '0%';
 
+        // 修改1: 無須有出場0次；修改5: 僅保留純機率
         return `
           <div class="p-3 bg-neutral-950 border border-neutral-800 rounded-xl space-y-1.5">
             <div class="flex items-center border-b border-neutral-800 pb-1">
@@ -3152,11 +3241,11 @@
             <div class="text-[11px] text-neutral-300 space-y-1">
               <div class="flex justify-between">
                 <span class="text-neutral-400">是真品機率：</span>
-                <span class="font-bold text-emerald-400 font-mono">${realRate} (${item.realCount}/${item.appearedCount})</span>
+                <span class="font-bold text-emerald-400 font-mono">${realRate}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-neutral-400">被查驗機率：</span>
-                <span class="font-bold text-amber-400 font-mono">${inspectRate} (${item.inspectedCount}/${item.appearedCount})</span>
+                <span class="font-bold text-amber-400 font-mono">${inspectRate}</span>
               </div>
             </div>
           </div>
@@ -3164,13 +3253,8 @@
       }).join('');
     }
 
-    /* ============================================================
-       歷史對局清單 (日期-第幾局分類，Accordion 每次僅展開一局)
-       ============================================================ */
-    let currentlyExpandedMatchIndex = null;
-
     function renderHistoryMatchListTab(games) {
-      // 標題已簡化，不顯示共 0 場
+      document.getElementById('historyGamesCount').innerText = `共 ${games.length} 場`;
       const container = document.getElementById('historyMatchList');
 
       if (games.length === 0) {
@@ -3226,21 +3310,55 @@
           }).join('');
         }
 
-        // 操作軌跡細節
+        // 操作軌跡細節 (清楚記錄每回合所指定到的下家，且為首家時醒目標記 ⭐首家)
         let logsHtml = '';
         if (g.actionLogs) {
           logsHtml = Object.entries(g.actionLogs).map(([pId, log]) => {
             const playerObj = (g.players || []).find(x => String(x.id) === String(pId));
             const pName = playerObj ? playerObj.name : `玩家${pId}`;
-            const r1 = log.r1 ? (log.r1.inspect || []).join(';') : '';
-            const r2 = log.r2 ? (log.r2.inspect || []).join(';') : '';
-            const r3 = log.r3 ? (log.r3.inspect || []).join(';') : '';
+            const pc = playerObj ? (COLOR_PALETTE.find(c => c.id === playerObj.colorId) || COLOR_PALETTE[0]) : COLOR_PALETTE[0];
+
+            let roundsDetailHtml = '';
+            [1, 2, 3].forEach(rNum => {
+              const rKey = `r${rNum}`;
+              const rData = log[rKey] || { inspect: [], ability: '無操作', next: '未指定' };
+              const rObj = (g.rounds || []).find(r => r.roundNum === rNum);
+              const isStarter = rData.isStarter || (rObj && String(rObj.starterPlayerId) === String(pId));
+              const starterBadge = isStarter ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-500 text-neutral-950 mr-1 shadow-sm">⭐首家</span>' : '';
+              
+              const inspectStr = (rData.inspect && rData.inspect.length > 0) ? rData.inspect.join('；') : '未查驗';
+              let nextStr = rData.next || '無紀錄';
+              if (!nextStr.includes('指定下家') && !nextStr.includes('最後一位') && nextStr !== '未指定' && nextStr !== '無紀錄') {
+                nextStr = `指定下家: ${nextStr}`;
+              }
+
+              roundsDetailHtml += `
+                <div class="py-1 px-2 rounded bg-neutral-950/80 border border-neutral-800/80 space-y-0.5 my-1">
+                  <div class="flex items-center justify-between flex-wrap gap-1">
+                    <div class="flex items-center">
+                      ${starterBadge}
+                      <b class="text-amber-400">第 ${rNum} 回合：</b>
+                      <span class="text-neutral-300">查[${inspectStr}]</span>
+                    </div>
+                    <span class="text-amber-300 font-bold ml-auto">${nextStr}</span>
+                  </div>
+                  ${rData.ability && rData.ability !== '無操作' ? `<div class="text-neutral-400 pl-1">• 能力：${rData.ability}</div>` : ''}
+                </div>
+              `;
+            });
+
             return `
-              <div class="p-2 rounded bg-neutral-900/90 border border-neutral-800 text-[10px] space-y-0.5">
-                <div class="font-bold text-neutral-200">${pName} (${playerObj ? playerObj.role : ''})</div>
-                <div>R1: 查[${r1 || '無'}] 能[${log.r1 ? log.r1.ability : ''}]</div>
-                <div>R2: 查[${r2 || '無'}] 能[${log.r2 ? log.r2.ability : ''}]</div>
-                <div>R3: 查[${r3 || '無'}] 能[${log.r3 ? log.r3.ability : ''}]</div>
+              <div class="p-2.5 rounded-xl bg-neutral-900 border border-neutral-800 text-[11px] space-y-1">
+                <div class="flex items-center justify-between border-b border-neutral-800 pb-1">
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full ${pc.dotClass} border inline-block"></span>
+                    <span class="font-bold text-neutral-100 text-xs">${pName}</span>
+                  </div>
+                  <span class="font-black ${['許願', '方震', '姬雲浮', '黃煙煙', '木戶加奈'].includes(playerObj ? playerObj.role : '') ? 'text-blue-400' : 'text-red-500'}">
+                    【${playerObj ? playerObj.role : ''}】
+                  </span>
+                </div>
+                ${roundsDetailHtml}
               </div>
             `;
           }).join('');
